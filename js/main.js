@@ -244,7 +244,7 @@ function startGame(mode) {
   const abLog = document.getElementById('ab-log');
   if (abLog) abLog.innerHTML = '<div class="log-empty">Pruning log appears after AI move</div>';
 
-  setStatusMessage('Player 1 — click or use ↑↓←→ + Enter to move', 'p1');
+  setStatusMessage('Player 1 — click or use arrow keys + Enter to move', 'p1');
   applyDebugMode();
 }
 
@@ -290,7 +290,7 @@ function onCellClick(row, col) {
   const nextPlayer = getState().currentPlayer;
 
   if (state.mode === 'pvp') {
-    setStatusMessage(`Player ${nextPlayer} — click or use ↑↓←→ + Enter`, `p${nextPlayer}`);
+    setStatusMessage(`Player ${nextPlayer} — click or use arrow keys + Enter`, `p${nextPlayer}`);
   } else {
     setStatusMessage('AI is thinking…', 'ai');
     scheduleAIMove();
@@ -340,7 +340,7 @@ function scheduleAIMove() {
           return;
         }
 
-        setStatusMessage('Player 1 — click or use ↑↓←→ + Enter', 'p1');
+        setStatusMessage('Player 1 — click or use arrow keys + Enter', 'p1');
       });
     });
 

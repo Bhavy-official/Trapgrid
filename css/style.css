@@ -760,50 +760,104 @@ body {
 .mh-dot.p2 { background: var(--p2); }
 .mh-text  { font-size: 10px; color: var(--text-dim); flex: 1; }
 .mh-score { font-size: 9px; color: var(--text-muted); }
+/* ============================= */
+/* CENTER AREA */
+/* ============================= */
 
 .center-area {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  padding: 14px; min-width: 0;
-}
-.board-container { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-
-.coord-row { display: flex; padding-left: 26px; }
-.coord-label {
-  font-family: var(--font-d);
-  font-size: 13px;
-  font-weight: 700;
-  color: #ffffff;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
-  min-height: 18px;
-  letter-spacing: 0.3px;
-  text-shadow:
-    0 1px 0 rgba(0,40,100,0.6),
-    0 2px 5px rgba(0,40,100,0.45),
-    1px 0 0 rgba(0,40,100,0.3),
-    -1px 0 0 rgba(0,40,100,0.3);
+  padding: 14px;
+  min-width: 0;
 }
-.board-with-rows { display: flex; gap: 4px; }
-.coord-col { display: flex; flex-direction: column; min-width: 20px; }
 
-.board-wrap { position: relative; }
+/* Main container */
+.board-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ============================= */
+/* TOP COORDINATES (A–G) */
+/* ============================= */
+
+.coord-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  width: min(54vmin, 448px);
+  padding-left: 0;   /* ❌ removed offset */
+}
+
+/* Individual label */
+.coord-row .coord-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(10px, 1.6vmin, 14px);
+  height: 22px;
+}
+
+/* ============================= */
+/* LEFT COORDINATES (1–7) */
+/* ============================= */
+
+.board-with-rows {
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.coord-col {
+  display: grid;
+  grid-template-rows: repeat(7, 1fr);
+  height: min(54vmin, 448px);
+  width: 22px;
+}
+
+.coord-col .coord-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(10px, 1.6vmin, 14px);
+}
+
+/* ============================= */
+/* BOARD */
+/* ============================= */
+
+.board-wrap {
+  position: relative;
+}
+
 .board {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   grid-template-rows: repeat(7, 1fr);
-  gap: 4px; padding: 10px;
+  gap: 4px;
+
+  padding: 8px; /* reduced for perfect alignment */
+  width: min(54vmin, 448px);
+  height: min(54vmin, 448px);
+
   background: rgba(255,255,255,0.88);
   border: 3px solid rgba(255,255,255,0.9);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-board);
-  width: min(54vmin, 448px); height: min(54vmin, 448px);
   backdrop-filter: blur(8px);
 }
 
-.overlay-canvas { position: absolute; top: 10px; left: 10px; pointer-events: none; border-radius: var(--radius); }
-
+/* Canvas must match board padding */
+.overlay-canvas {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  pointer-events: none;
+  border-radius: var(--radius);
+}
 .cell {
   border-radius: var(--radius); position: relative;
   background: linear-gradient(135deg, #f0f8ff, #e0efff);
@@ -1422,4 +1476,75 @@ body {
     -webkit-mask-size: 64px 30px; mask-size: 64px 30px;
   }
   #screen-menu::after { height: 32px; }
+}
+
+@media (max-width: 700px) {
+
+  .mode-cards {
+    flex-direction: row;     /* keep cards side by side */
+    flex-wrap: nowrap;       /* prevent stacking */
+    justify-content: center;
+  }
+
+}
+
+@media (max-width: 700px) {
+
+  .mode-desc {
+    display: none;
+  }
+  .press-prompt {
+    display: none;
+  }
+
+}
+
+@media (max-width: 700px) {
+
+  .mode-cards {
+    gap: 10px;
+    padding: 0 10px;
+  }
+
+  .mode-card {
+    width: 45vw;     /* responsive width */
+    max-width: 160px;
+  }
+
+}
+
+@media (max-width: 700px) {
+
+  .mode-cards {
+    margin-bottom: 28px;   /* space before feature tags */
+  }
+
+}
+
+@media (max-width: 700px) {
+
+  .mode-card {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .mode-card-tile {
+    margin: 0 auto;
+  }
+
+  .mode-title,
+  .mode-label {
+    width: 100%;
+    text-align: center;
+  }
+
+}
+
+@media (max-width: 700px) {
+
+  .coord-row,
+  .coord-col {
+    display: none !important;
+  }
+
 }
