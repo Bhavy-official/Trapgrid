@@ -298,53 +298,39 @@ function onCellClick(row, col) {
 }
 
 function scheduleAIMove() {
-  showAIThinking('Running Minimax depth-3 + Alpha-Beta pruning…');
-  startAIProgressBar();
+  const state = getState();
+  if (!state || state.gameOver) return;
 
-  setTimeout(() => {
-    const state = getState();
-    if (!state || state.gameOver) {
-      hideAIThinking();
-      completeAIProgressBar(null);
+  const aiFromPos = { row: state.p2.row, col: state.p2.col };
+  const result    = triggerAIMove();
+
+  if (!result) {
+    handleGameOver(1);
+    return;
+  }
+
+  flashChosenCell(result.moved.row, result.moved.col, () => {
+    animateBlockedCell(result.blocked);
+    renderBoard(onCellClick);
+    updatePanels();
+    updateMoveHistory();
+    updateTurnCounter();
+
+    const afterState = getState();
+    const searchData = afterState.lastAISearchData;
+    if (searchData) {
+      renderMinimaxTree(searchData);
+      renderAlphaBeta(searchData);
+      logMoveAnalysis(2, aiFromPos, result.moved, searchData);
+    }
+
+    if (result.gameOver) {
+      handleGameOver(result.winner);
       return;
     }
 
-    const aiFromPos = { row: state.p2.row, col: state.p2.col };
-    const result    = triggerAIMove();
-
-    completeAIProgressBar(() => {
-      hideAIThinking();
-
-      if (!result) {
-        handleGameOver(1);
-        return;
-      }
-
-      flashChosenCell(result.moved.row, result.moved.col, () => {
-        animateBlockedCell(result.blocked);
-        renderBoard(onCellClick);
-        updatePanels();
-        updateMoveHistory();
-        updateTurnCounter();
-
-        const afterState = getState();
-        const searchData = afterState.lastAISearchData;
-        if (searchData) {
-          renderMinimaxTree(searchData);
-          renderAlphaBeta(searchData);
-          logMoveAnalysis(2, aiFromPos, result.moved, searchData);
-        }
-
-        if (result.gameOver) {
-          handleGameOver(result.winner);
-          return;
-        }
-
-        setStatusMessage('Player 1 — click or use arrow keys + Enter', 'p1');
-      });
-    });
-
-  }, 600);
+    setStatusMessage('Player 1 — click or use arrow keys + Enter', 'p1');
+  });
 }
 
 function handleGameOver(winner) {
