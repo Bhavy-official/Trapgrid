@@ -1,11 +1,9 @@
-/**
- * main.js — Trap Grid AI Edition: Orchestration
- */
 
 'use strict';
 
 let currentMode = 'pvp';
 let debugMode   = false;
+
 window.bgm = new Audio('assets/bgm1.mp3');
 bgm.loop = true;
 bgm.volume = 0.4;
@@ -19,9 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
   applyDebugMode();
 });
 
-/* ─────────────────────────────────────────
-   MENU EVENTS
-───────────────────────────────────────── */
 function bindMenuEvents() {
   document.getElementById('btn-pvp').addEventListener('click', () => {
     bgm.currentTime = 0;
@@ -36,16 +31,12 @@ function bindMenuEvents() {
   });
 }
 
-/* ─────────────────────────────────────────
-   GAME EVENTS
-───────────────────────────────────────── */
 function bindGameEvents() {
   document.getElementById('btn-back').addEventListener('click',      goToMenu);
   document.getElementById('btn-restart').addEventListener('click',   restartGame);
   document.getElementById('popup-restart').addEventListener('click', restartGame);
   document.getElementById('popup-menu').addEventListener('click',    goToMenu);
 
-  /* ── Help popup ── */
   const openHelp  = () => document.getElementById('help-popup').classList.remove('hidden');
   const closeHelp = () => document.getElementById('help-popup').classList.add('hidden');
 
@@ -57,12 +48,10 @@ function bindGameEvents() {
   if (btnHelpGame)  btnHelpGame.addEventListener('click',  openHelp);
   if (btnHelpClose) btnHelpClose.addEventListener('click', closeHelp);
 
-  // Close on backdrop click
   document.getElementById('help-popup').addEventListener('click', (e) => {
     if (e.target.id === 'help-popup') closeHelp();
   });
 
-  /* ── Debug ── */
   const btnDebug = document.getElementById('btn-debug');
   if (btnDebug) {
     btnDebug.addEventListener('click', () => {
@@ -71,7 +60,6 @@ function bindGameEvents() {
     });
   }
 
-  /* ── Heatmap ── */
   const btnHeat = document.getElementById('btn-heatmap');
   if (btnHeat) {
     btnHeat.addEventListener('click', () => {
@@ -83,7 +71,6 @@ function bindGameEvents() {
     });
   }
 
-  /* ── BFS Zones ── */
   const btnBFS = document.getElementById('btn-bfs-vis');
   if (btnBFS) {
     btnBFS.addEventListener('click', () => {
@@ -95,7 +82,6 @@ function bindGameEvents() {
     });
   }
 
-  /* ── Algo Panel ── */
   const btnPanel = document.getElementById('btn-algo-panel');
   if (btnPanel) {
     btnPanel.addEventListener('click', () => {
@@ -104,16 +90,11 @@ function bindGameEvents() {
     });
   }
 
-  /* ── Keyboard ── */
   document.addEventListener('keydown', onKeyDown);
 
-  /* ── Resize ── */
   window.addEventListener('resize', () => refreshOverlay());
 }
 
-/* ─────────────────────────────────────────
-   DEBUG MODE
-───────────────────────────────────────── */
 function applyDebugMode() {
   document.body.classList.toggle('debug-active', debugMode);
 
@@ -133,13 +114,9 @@ function applyDebugMode() {
   setTimeout(() => refreshOverlay(), 300);
 }
 
-/* ─────────────────────────────────────────
-   KEYBOARD NAVIGATION
-───────────────────────────────────────── */
 let focusedMoveIndex = -1;
 
 function onKeyDown(e) {
-  // Close help on Escape
   if (e.key === 'Escape') {
     const helpPopup = document.getElementById('help-popup');
     if (helpPopup && !helpPopup.classList.contains('hidden')) {
@@ -200,9 +177,6 @@ function clearKeyboardFocus() {
   focusedMoveIndex = -1;
 }
 
-/* ─────────────────────────────────────────
-   TURN COUNTER
-───────────────────────────────────────── */
 function updateTurnCounter() {
   const state = getState();
   if (!state) return;
@@ -214,9 +188,6 @@ function updateTurnCounter() {
   el.classList.add('bump');
 }
 
-/* ─────────────────────────────────────────
-   AI PROGRESS BAR
-───────────────────────────────────────── */
 function startAIProgressBar() {
   const bar  = document.getElementById('ai-progress-bar');
   const fill = document.getElementById('ai-progress-fill');
@@ -257,9 +228,6 @@ function completeAIProgressBar(callback) {
   }, 180);
 }
 
-/* ─────────────────────────────────────────
-   CHOSEN CELL GLOW
-───────────────────────────────────────── */
 function flashChosenCell(row, col, callback) {
   const el = document.querySelector(`#board .cell[data-row="${row}"][data-col="${col}"]`);
   if (el) {
@@ -273,9 +241,6 @@ function flashChosenCell(row, col, callback) {
   }
 }
 
-/* ─────────────────────────────────────────
-   GAME LIFECYCLE
-───────────────────────────────────────── */
 function startGame(mode) {
   currentMode = mode;
   initGame(mode);
@@ -315,9 +280,6 @@ function goToMenu() {
   showScreen('menu');
 }
 
-/* ─────────────────────────────────────────
-   CELL CLICK → MOVE
-───────────────────────────────────────── */
 function onCellClick(row, col) {
   const state = getState();
   if (!state || state.gameOver) return;
@@ -355,9 +317,6 @@ function onCellClick(row, col) {
   }
 }
 
-/* ─────────────────────────────────────────
-   AI TURN
-───────────────────────────────────────── */
 function scheduleAIMove() {
   const state = getState();
   if (!state || state.gameOver) return;
@@ -394,9 +353,6 @@ function scheduleAIMove() {
   });
 }
 
-/* ─────────────────────────────────────────
-   WIN DETECTION
-───────────────────────────────────────── */
 function handleGameOver(winner) {
   const state = getState();
   const isAI  = state.mode === 'pvai';
@@ -409,9 +365,6 @@ function handleGameOver(winner) {
   setTimeout(() => showWinPopup(winner, state), 700);
 }
 
-/* ─────────────────────────────────────────
-   MENU PARTICLES
-───────────────────────────────────────── */
 function startMenuParticles() {
   const canvas = document.getElementById('menu-particles');
   if (!canvas) return;
