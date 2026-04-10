@@ -1,20 +1,33 @@
 /**
  * minimax.js — Minimax with Alpha-Beta Pruning + Full Visualization Data
  *
- * Enhanced features:
- *  - Captures search tree nodes for display
- *  - Logs every alpha-beta cutoff
- *  - Tracks nodes visited vs pruned
- *  - Per-move score breakdown
- *  - Configurable AI difficulty (depth)
+ * UPGRADED:
+ *  - Adaptive depth (deeper when fewer moves available)
+ *  - Move ordering (best moves first = more pruning)
+ *  - Richer heuristic: territory, isolation, wall traps, center control
+ *  - Endgame awareness: recognizes "dead zones" where you'll be sealed off
+ *  - depthUsed stored in searchData for real-time panel display
  */
 
 'use strict';
 
-let MINIMAX_DEPTH = 3;
+let MINIMAX_DEPTH = 5;
+const MAX_DEPTH_ADAPTIVE = 8;
 
-const SCORE_WIN  =  10000;
-const SCORE_LOSE = -10000;
+const SCORE_WIN  =  100000;
+const SCORE_LOSE = -100000;
+
+const CENTER_BONUS = (() => {
+  const tbl = [];
+  for (let r = 0; r < 7; r++) {
+    tbl[r] = [];
+    for (let c = 0; c < 7; c++) {
+      const dr = Math.abs(r - 3), dc = Math.abs(c - 3);
+      tbl[r][c] = 6 - (dr + dc);
+    }
+  }
+  return tbl;
+})();
 
 let lastSearchData = {
   nodesVisited: 0,
@@ -22,19 +35,111 @@ let lastSearchData = {
   pruneLog:     [],
   tree:         null,
   moveScores:   [],
+  depthUsed:    5,
 };
 
 function heuristic(board, p1Pos, p2Pos) {
-  const aiTerritory  = countReachable(board, p2Pos.row, p2Pos.col);
-  const oppTerritory = countReachable(board, p1Pos.row, p1Pos.col);
-  const dist         = getManhattanDistance(p1Pos.row, p1Pos.col, p2Pos.row, p2Pos.col);
-  const distBonus    = dist * 0.5;
+  const aiMobility  = countReachable(board, p2Pos.row, p2Pos.col);
+  const oppMobility = countReachable(board, p1Pos.row, p1Pos.col);
 
-  const score = aiTerritory - oppTerritory + distBonus;
-  return { score, breakdown: { aiTerritory, oppTerritory, dist, distBonus } };
+  const aiImmediate  = getValidMoves(board, p2Pos.row, p2Pos.col).length;
+  const oppImmediate = getValidMoves(board, p1Pos.row, p1Pos.col).length;
+
+  const territoryScore  = (aiMobility - oppMobility) * 2.5;
+  const immediateScore  = (aiImmediate - oppImmediate) * 3.0;
+  const dist            = getManhattanDistance(p1Pos.row, p1Pos.col, p2Pos.row, p2Pos.col);
+  const distScore       = dist * 0.3;
+  const aiCenter        = CENTER_BONUS[p2Pos.row][p2Pos.col] * 0.4;
+  const oppCenter       = CENTER_BONUS[p1Pos.row][p1Pos.col] * 0.4;
+  const centerScore     = aiCenter - oppCenter;
+  const aiWallDanger    = getWallDanger(board, p2Pos);
+  const oppWallDanger   = getWallDanger(board, p1Pos);
+  const wallScore       = (oppWallDanger - aiWallDanger) * 1.5;
+  const isolationPenalty = getIsolationPenalty(aiMobility, aiImmediate);
+  const isolationBonus   = getIsolationBonus(oppMobility, oppImmediate);
+
+  const score = territoryScore + immediateScore + distScore + centerScore + wallScore - isolationPenalty + isolationBonus;
+
+  return {
+    score,
+    breakdown: {
+      aiTerritory:    aiMobility,
+      oppTerritory:   oppMobility,
+      dist,
+      distBonus:      distScore,
+      immediateScore,
+      centerScore,
+      wallScore,
+    },
+  };
 }
 
-function minimaxInternal(board, depth, alpha, beta, isMaximizing, p1Pos, p2Pos, treeNode) {
+function getWallDanger(board, pos) {
+  const moves = getValidMoves(board, pos.row, pos.col);
+  const isEdge   = pos.row === 0 || pos.row === 6 || pos.col === 0 || pos.col === 6;
+  const isCorner = (pos.row === 0 || pos.row === 6) && (pos.col === 0 || pos.col === 6);
+  let danger = 0;
+  if (isCorner) danger += 4;
+  else if (isEdge) danger += 2;
+  danger += Math.max(0, 2 - moves.length) * 3;
+  return danger;
+}
+
+function getIsolationPenalty(mobility, immediate) {
+  if (immediate === 0) return 200;
+  if (mobility < 4)   return 80;
+  if (mobility < 8)   return 40;
+  if (mobility < 12)  return 15;
+  return 0;
+}
+
+function getIsolationBonus(oppMobility, oppImmediate) {
+  if (oppImmediate === 0) return 300;
+  if (oppMobility < 4)   return 80;
+  if (oppMobility < 8)   return 35;
+  return 0;
+}
+
+function orderMoves(board, moves, isMaximizing, p1Pos, p2Pos) {
+  const scored = moves.map(move => {
+    let score = 0;
+
+    if (isMaximizing) {
+      board[p2Pos.row][p2Pos.col] = -1;
+      board[move.row][move.col] = 2;
+      score  = countReachable(board, move.row, move.col) * 2;
+      score -= countReachable(board, p1Pos.row, p1Pos.col);
+      board[move.row][move.col] = 0;
+      board[p2Pos.row][p2Pos.col] = 2;
+    } else {
+      board[p1Pos.row][p1Pos.col] = -1;
+      board[move.row][move.col] = 1;
+      score  = -countReachable(board, move.row, move.col);
+      score += countReachable(board, p2Pos.row, p2Pos.col) * 2;
+      board[move.row][move.col] = 0;
+      board[p1Pos.row][p1Pos.col] = 1;
+    }
+
+    score += CENTER_BONUS[move.row][move.col] * 0.2;
+    return { move, score };
+  });
+
+  scored.sort((a, b) => isMaximizing ? b.score - a.score : a.score - b.score);
+  return scored.map(s => s.move);
+}
+
+function getAdaptiveDepth(board, p1Pos, p2Pos) {
+  const ai  = getValidMoves(board, p2Pos.row, p2Pos.col).length;
+  const opp = getValidMoves(board, p1Pos.row, p1Pos.col).length;
+  const minMoves = Math.min(ai, opp);
+
+  if (minMoves <= 2) return Math.min(MAX_DEPTH_ADAPTIVE, MINIMAX_DEPTH + 3);
+  if (minMoves <= 4) return Math.min(MAX_DEPTH_ADAPTIVE, MINIMAX_DEPTH + 2);
+  if (minMoves <= 6) return Math.min(MAX_DEPTH_ADAPTIVE, MINIMAX_DEPTH + 1);
+  return MINIMAX_DEPTH;
+}
+
+function minimaxInternal(board, depth, alpha, beta, isMaximizing, p1Pos, p2Pos, treeNode, rootDepth) {
   lastSearchData.nodesVisited++;
 
   const p1Moves = getValidMoves(board, p1Pos.row, p1Pos.col);
@@ -57,15 +162,19 @@ function minimaxInternal(board, depth, alpha, beta, isMaximizing, p1Pos, p2Pos, 
     return score;
   }
 
-  const moves = isMaximizing ? p2Moves : p1Moves;
+  const rawMoves = isMaximizing ? p2Moves : p1Moves;
+  const moves    = orderMoves(board, rawMoves, isMaximizing, p1Pos, p2Pos);
+
   let best = isMaximizing ? -Infinity : +Infinity;
   treeNode.children = [];
 
-  for (const move of moves) {
+  for (let i = 0; i < moves.length; i++) {
+    const move = moves[i];
+
     const childNode = {
       move: `(${move.row},${move.col})`,
       type: isMaximizing ? 'MAX' : 'MIN',
-      depth: MINIMAX_DEPTH - depth,
+      depth: rootDepth - depth,
       pruned: false,
       children: [],
     };
@@ -86,7 +195,7 @@ function minimaxInternal(board, depth, alpha, beta, isMaximizing, p1Pos, p2Pos, 
       newPos2 = p2Pos;
     }
 
-    const score = minimaxInternal(board, depth - 1, alpha, beta, !isMaximizing, newPos1, newPos2, childNode);
+    const score = minimaxInternal(board, depth - 1, alpha, beta, !isMaximizing, newPos1, newPos2, childNode, rootDepth);
 
     if (isMaximizing) {
       board[move.row][move.col] = 0;
@@ -101,7 +210,7 @@ function minimaxInternal(board, depth, alpha, beta, isMaximizing, p1Pos, p2Pos, 
       if (score > alpha) alpha = score;
     } else {
       if (score < best) best = score;
-      if (score < beta)  beta  = score;
+      if (score < beta)  beta = score;
     }
 
     childNode.score = score;
@@ -111,24 +220,21 @@ function minimaxInternal(board, depth, alpha, beta, isMaximizing, p1Pos, p2Pos, 
     if (beta <= alpha) {
       lastSearchData.nodesPruned++;
       lastSearchData.pruneLog.push({
-        depth: MINIMAX_DEPTH - depth,
+        depth: rootDepth - depth,
         alpha: alpha.toFixed(1),
         beta:  beta.toFixed(1),
         move:  `(${move.row},${move.col})`,
         type:  isMaximizing ? 'β-cutoff' : 'α-cutoff',
       });
 
-      const remaining = moves.indexOf(move) + 1;
-      if (remaining < moves.length) {
-        for (let i = remaining; i < moves.length; i++) {
-          treeNode.children.push({
-            move: `(${moves[i].row},${moves[i].col})`,
-            type: isMaximizing ? 'MAX' : 'MIN',
-            pruned: true,
-            score: '✂',
-          });
-          lastSearchData.nodesPruned++;
-        }
+      for (let j = i + 1; j < moves.length; j++) {
+        treeNode.children.push({
+          move: `(${moves[j].row},${moves[j].col})`,
+          type: isMaximizing ? 'MAX' : 'MIN',
+          pruned: true,
+          score: '✂',
+        });
+        lastSearchData.nodesPruned++;
       }
       break;
     }
@@ -142,18 +248,24 @@ function getBestAIMove(board, p1Pos, p2Pos) {
   const moves = getValidMoves(board, p2Pos.row, p2Pos.col);
   if (moves.length === 0) return null;
 
+  const depth = getAdaptiveDepth(board, p1Pos, p2Pos);
+  MINIMAX_DEPTH = depth;
+
   lastSearchData = {
     nodesVisited: 0,
     nodesPruned:  0,
     pruneLog:     [],
     tree:         { move: 'ROOT', type: 'MAX', depth: 0, children: [] },
     moveScores:   [],
+    depthUsed:    depth,
   };
 
-  let bestScore = -Infinity;
-  let bestMove  = moves[0];
+  const orderedMoves = orderMoves(board, moves, true, p1Pos, p2Pos);
 
-  for (const move of moves) {
+  let bestScore = -Infinity;
+  let bestMove  = orderedMoves[0];
+
+  for (const move of orderedMoves) {
     const childNode = {
       move: `(${move.row},${move.col})`,
       type: 'MAX',
@@ -169,11 +281,12 @@ function getBestAIMove(board, p1Pos, p2Pos) {
 
     const score = minimaxInternal(
       board,
-      MINIMAX_DEPTH - 1,
+      depth - 1,
       -Infinity, +Infinity,
       false,
       p1Pos, newP2,
-      childNode
+      childNode,
+      depth
     );
 
     board[move.row][move.col] = 0;
@@ -190,9 +303,7 @@ function getBestAIMove(board, p1Pos, p2Pos) {
     }
   }
 
-  lastSearchData.tree.children.forEach(c => {
-    c.isBest = (c.score === bestScore);
-  });
+  lastSearchData.tree.children.forEach(c => { c.isBest = (c.score === bestScore); });
   lastSearchData.tree.score = bestScore;
   lastSearchData.bestScore  = bestScore;
   lastSearchData.bestMove   = bestMove;
@@ -201,7 +312,7 @@ function getBestAIMove(board, p1Pos, p2Pos) {
 }
 
 function setAIDifficulty(depth) {
-  MINIMAX_DEPTH = Math.max(1, Math.min(5, depth));
+  MINIMAX_DEPTH = Math.max(1, Math.min(MAX_DEPTH_ADAPTIVE, depth));
 }
 
 function getHeuristicBreakdown(board, p1Pos, p2Pos) {
