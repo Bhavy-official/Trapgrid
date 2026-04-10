@@ -8,19 +8,16 @@
   <link rel="stylesheet" href="css/style.css"/>
   <link rel="stylesheet" href="css/additions.css"/>
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Bitcount+Grid+Double+Ink:wght@600;700&display=swap" rel="stylesheet">
 
-  <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 
 <body>
 
-<!-- WORLD TRANSITION -->
 <div id="transition-overlay" class="transition-overlay">
   <div class="transition-curtain left"></div>
   <div class="transition-curtain right"></div>
@@ -33,13 +30,19 @@
 </div>
 
 
-<!-- MENU -->
 <div id="screen-menu" class="screen active">
 
   <div class="cloud-layer"></div>
   <canvas id="menu-particles" class="menu-particles"></canvas>
-  <div class="soil-credit"><span>Made by — Bhavy Manchanda</span></div>
+  <div class="button-container">
   <button class="help-btn" id="btn-help-menu" aria-label="How to play">?</button>
+  
+  <a href="/theory" class="theory-link">
+    <button class="theory-btn help-btn" id="btn-help-menu" aria-label="Theory">
+      <i class="fa-solid fa-book"></i>
+    </button>
+  </a>
+</div>
   <div class="menu-container">
 
     <div class="logo-wrap">
@@ -95,7 +98,6 @@
 
 
 
-<!-- GAME SCREEN -->
 <div id="screen-game" class="screen">
   <div class="game-root">
 
@@ -135,7 +137,6 @@
 
 <div class="game-content">
 
-<!-- LEFT PANEL -->
 <aside class="left-panel">
 
 <div class="player-card" id="card-p1">
@@ -246,7 +247,6 @@
 
 <div class="sb-title"><i class="fa-solid fa-scale-balanced"></i> Heuristic Score</div>
 
-<!-- Updated formula to match the upgraded heuristic -->
 <div class="sb-formula">
   score = territory×2.5 + immediate×3 + dist + center + wall + isolation
 </div>
@@ -268,7 +268,6 @@
 <span id="sb-dist">-</span>
 </div>
 
-<!-- NEW rows for upgraded heuristic components -->
 <div class="sb-row">
 <span>Immediate Moves</span>
 <span id="sb-imm">-</span>
@@ -312,7 +311,6 @@ Move History
 
 
 
-<!-- CENTER BOARD -->
 <main class="center-area">
 
 <div class="board-container">
@@ -366,7 +364,6 @@ Select a highlighted cell to move
 
 
 
-<!-- RIGHT PANEL -->
 <aside class="right-panel hidden-panel" id="algo-panel">
 
 <div class="algo-section">
@@ -374,7 +371,6 @@ Select a highlighted cell to move
 <div class="as-title">
 <i class="fa-solid fa-tree"></i>
 Minimax Search Tree
-<!-- Badge updates in real-time via JS after each AI move -->
 <span class="as-badge" id="mm-depth-badge">depth 5 (adaptive)</span>
 </div>
 
@@ -401,7 +397,6 @@ Alpha-Beta Pruning
 Branches pruned when α ≥ β. Move ordering ensures the best branches are searched first, maximising cuts.
 </div>
 
-<!-- Depth used this turn -->
 <div class="ab-stats">
 
 <div class="ab-stat">
@@ -481,9 +476,6 @@ System ready. Make a move to begin analysis.
 </div>
 
 
-<!-- ══════════════════════════════════════
-     HELP POPUP
-══════════════════════════════════════ -->
 <div id="help-popup" class="help-overlay hidden">
   <div class="help-box">
 
@@ -614,7 +606,6 @@ System ready. Make a move to begin analysis.
 </div>
 
 
-<!-- WIN POPUP -->
 <div id="win-popup" class="popup-overlay hidden">
 
 <div class="popup-box">
@@ -679,7 +670,6 @@ Opponent has no valid moves.
 
 
 
-<!-- SCRIPTS -->
 <script src="js/bfs.js"></script>
 <script src="js/minimax.js"></script>
 <script src="js/game.js"></script>

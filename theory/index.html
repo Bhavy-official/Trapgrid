@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TrapGrid — Algorithm Theory & Deep Dive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+<style>
+:root {
+  --sky-top:#4fb3e8;--sky-mid:#72c6f0;--sky-low:#a0d9f8;
+  --surf:#fff;--surf2:#f0f8ff;--surf3:#dbeeff;--surf4:#c8e6fa;
+  --border:#b8d9f0;--border2:#90c0e8;--border3:#6aaad8;
+  --p1:#2ecc40;--p1-dark:#1a8a28;--p1-dim:#d4f5d8;--p1-glow:rgba(46,204,64,.35);
+  --p2:#2196f3;--p2-dark:#1565c0;--p2-dim:#d0e8ff;--p2-glow:rgba(33,150,243,.35);
+  --blocked:#d8c8b0;--blocked-b:#b8a890;
+  --hl:#ffe033;--accent:#f4c400;--accent-dark:#d4a800;
+  --danger:#ff4444;--success:#2ecc40;--purple:#9b59b6;--cyan:#00bcd4;--orange:#ff7c2a;
+  --text:#1a2e45;--text-dim:#4a6a8a;--text-muted:#8ab0cc;--text-light:#fff;
+  --radius:10px;--radius-lg:16px;--radius-xl:22px;--radius-pill:999px;
+  --font-d:'Fredoka',sans-serif;--font-m:'JetBrains Mono',monospace;
+  --shadow-card:0 4px 0 #90c0e8,0 8px 24px rgba(0,60,120,.12);
+  --shadow-btn:0 4px 0 var(--accent-dark);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font-m);color:var(--text);
+  background:radial-gradient(ellipse 220px 80px at 10% 18%,rgba(255,255,255,.75) 0%,transparent 70%),
+    radial-gradient(ellipse 280px 90px at 70% 22%,rgba(255,255,255,.70) 0%,transparent 70%),
+    linear-gradient(180deg,#4fb3e8 0%,#72c6f0 25%,#a0d9f8 55%,#c8eeff 80%,#dff6ff 100%);
+  min-height:100vh;
+}
+
+.nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(255,255,255,.88);backdrop-filter:blur(16px);
+  border-bottom:3px solid var(--border);
+  padding:10px 24px;display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 3px 16px rgba(0,60,120,.1);
+}
+.nav-logo{font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--text);letter-spacing:1px}
+.nav-logo span{color:#1565c0}
+.nav-links{display:flex;gap:6px;flex-wrap:wrap}
+.nav-link{
+  font-family:var(--font-d);font-size:11px;font-weight:600;letter-spacing:.3px;
+  padding:5px 13px;border-radius:var(--radius-pill);
+  background:var(--surf2);border:2px solid var(--border2);color:var(--text-dim);
+  cursor:pointer;text-decoration:none;transition:all .15s;box-shadow:0 2px 0 var(--border2);
+}
+.nav-link:hover{border-color:var(--border3);color:var(--text);transform:translateY(-1px)}
+
+.hero{
+  text-align:center;padding:60px 24px 50px;position:relative;overflow:hidden;
+}
+.hero-badge{
+  display:inline-block;font-family:var(--font-d);font-size:11px;font-weight:600;
+  letter-spacing:3px;color:#fff;background:rgba(255,255,255,.22);backdrop-filter:blur(8px);
+  border:2px solid rgba(255,255,255,.55);padding:5px 18px;border-radius:var(--radius-pill);
+  margin-bottom:16px;text-shadow:0 1px 3px rgba(0,60,120,.3);
+}
+.hero-title{
+  font-family:var(--font-d);font-size:clamp(48px,9vw,88px);font-weight:700;line-height:.95;
+  color:#fff;
+  text-shadow:4px 4px 0 #e8a200,8px 8px 0 #c47c00,0 10px 40px rgba(0,60,120,.3);
+  letter-spacing:2px;margin-bottom:8px;
+}
+.hero-title span{color:#ffe033;text-shadow:4px 4px 0 #d47000,8px 8px 0 #a85000}
+.hero-sub{
+  font-family:var(--font-d);font-size:15px;font-weight:500;letter-spacing:2px;
+  color:rgba(255,255,255,.88);margin-bottom:24px;text-shadow:0 2px 8px rgba(0,60,120,.3);
+}
+.hero-tags{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:32px}
+.htag{
+  font-family:var(--font-d);font-size:12px;font-weight:600;padding:4px 14px;
+  border-radius:var(--radius-pill);background:rgba(255,255,255,.9);
+  border:2px solid rgba(255,255,255,.5);color:#1565c0;box-shadow:0 2px 0 rgba(0,60,120,.18);
+}
+.hero-scroll{
+  font-family:var(--font-d);font-size:12px;color:rgba(255,255,255,.7);letter-spacing:1.5px;
+  animation:bobble 1.5s ease-in-out infinite;display:inline-block;
+}
+@keyframes bobble{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+.page{max-width:1100px;margin:0 auto;padding:0 20px 80px}
+
+.section{
+  background:rgba(255,255,255,.82);backdrop-filter:blur(12px);
+  border:3px solid rgba(255,255,255,.9);border-radius:var(--radius-xl);
+  padding:32px;margin-bottom:28px;box-shadow:var(--shadow-card);
+  opacity:0;transform:translateY(28px);transition:opacity .5s,transform .5s;
+}
+.section.visible{opacity:1;transform:none}
+.sec-header{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.sec-icon{
+  width:44px;height:44px;border-radius:var(--radius-lg);display:flex;align-items:center;
+  justify-content:center;font-size:20px;flex-shrink:0;
+  box-shadow:0 3px 0 rgba(0,0,0,.15);
+}
+.sec-icon.green{background:linear-gradient(135deg,#4ade80,#16a34a);color:#fff}
+.sec-icon.blue {background:linear-gradient(135deg,#60a5fa,#1d4ed8);color:#fff}
+.sec-icon.purple{background:linear-gradient(135deg,#c084fc,#7c3aed);color:#fff}
+.sec-icon.orange{background:linear-gradient(135deg,#fdba74,#ea580c);color:#fff}
+.sec-icon.cyan  {background:linear-gradient(135deg,#67e8f9,#0891b2);color:#fff}
+.sec-icon.gold  {background:linear-gradient(135deg,#fde68a,#d97706);color:#fff}
+.sec-icon.red   {background:linear-gradient(135deg,#fca5a5,#dc2626);color:#fff}
+.sec-icon.teal  {background:linear-gradient(135deg,#5eead4,#0d9488);color:#fff}
+
+.sec-title-wrap{}
+.sec-title{font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--text);line-height:1.1}
+.sec-subtitle{font-family:var(--font-d);font-size:12px;color:var(--text-muted);letter-spacing:1px;margin-top:3px}
+
+.prose{font-family:var(--font-d);font-size:14px;color:var(--text-dim);line-height:1.75;margin-bottom:16px}
+.prose strong{color:var(--text);font-weight:700}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:16px 0}
+.card{
+  background:var(--surf2);border:2px solid var(--border);border-radius:var(--radius-lg);
+  padding:16px;box-shadow:0 3px 0 var(--border2);transition:transform .15s,box-shadow .15s;
+}
+.card:hover{transform:translateY(-3px);box-shadow:0 6px 0 var(--border2)}
+.card-icon{font-size:24px;margin-bottom:10px}
+.card-title{font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px}
+.card-body{font-family:var(--font-d);font-size:12px;color:var(--text-dim);line-height:1.6}
+
+.formula-box{
+  background:linear-gradient(135deg,#0e1729,#1a2e4a);
+  border:2px solid #2d4a7a;border-radius:var(--radius-lg);
+  padding:20px 24px;margin:16px 0;
+  box-shadow:0 4px 0 #0a1020,0 8px 24px rgba(0,20,80,.3);
+  position:relative;overflow:hidden;
+}
+.formula-box::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#22c55e,#3b82f6,#a78bfa,#f472b6);
+}
+.formula-label{
+  font-family:var(--font-d);font-size:10px;font-weight:600;letter-spacing:2px;
+  color:#60a5fa;text-transform:uppercase;margin-bottom:10px;
+}
+.formula{
+  font-family:var(--font-m);font-size:13px;color:#e2f0ff;line-height:2;
+  white-space:pre-wrap;word-break:break-all;
+}
+.formula .kw{color:#f472b6}
+.formula .num{color:#4ade80}
+.formula .op{color:#fbbf24}
+.formula .var{color:#60a5fa}
+.formula .comment{color:#475569;font-style:italic}
+
+.steps{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.step{
+  display:flex;align-items:flex-start;gap:14px;
+  background:var(--surf2);border:2px solid var(--border);
+  border-radius:var(--radius);padding:12px 14px;
+  transition:border-color .15s,box-shadow .15s;
+}
+.step:hover{border-color:var(--border3);box-shadow:0 3px 0 var(--border2)}
+.step-num{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-d);font-size:13px;font-weight:700;color:#fff;
+  box-shadow:0 2px 6px rgba(0,0,0,.2);
+}
+.step-num.g{background:linear-gradient(135deg,#22c55e,#16a34a)}
+.step-num.b{background:linear-gradient(135deg,#60a5fa,#1d4ed8)}
+.step-num.p{background:linear-gradient(135deg,#c084fc,#7c3aed)}
+.step-num.o{background:linear-gradient(135deg,#fdba74,#ea580c)}
+.step-body{flex:1}
+.step-title{font-family:var(--font-d);font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}
+.step-desc{font-family:var(--font-d);font-size:12px;color:var(--text-dim);line-height:1.6}
+.step-desc code{
+  font-family:var(--font-m);font-size:11px;padding:1px 6px;
+  background:var(--surf3);border:1px solid var(--border2);border-radius:5px;color:#0369a1;
+}
+
+.tree-demo{
+  background:#0e1729;border:2px solid #2d4a7a;border-radius:var(--radius-lg);
+  padding:16px;font-family:var(--font-m);font-size:11px;margin:16px 0;
+  max-height:320px;overflow-y:auto;
+}
+.tn{display:flex;align-items:center;gap:6px;padding:3px 0;color:#94a3b8;animation:fadeRow .3s ease}
+@keyframes fadeRow{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.tn .indent{color:#334155;white-space:pre}
+.tn .type-max{background:#1e3a5f;color:#60a5fa;padding:1px 7px;border-radius:999px;font-size:9px;font-family:var(--font-d);font-weight:600}
+.tn .type-min{background:#1e3d2a;color:#4ade80;padding:1px 7px;border-radius:999px;font-size:9px;font-family:var(--font-d);font-weight:600}
+.tn .score{color:#fbbf24;font-weight:600}
+.tn .best{color:#4ade80;font-weight:700}
+.tn .pruned{color:#ef4444;font-style:italic}
+.tn .move{color:#7dd3fc}
+
+.heatmap-demo{display:inline-grid;grid-template-columns:repeat(7,36px);gap:3px;margin:12px 0}
+.hm-cell{
+  width:36px;height:36px;border-radius:8px;display:flex;align-items:center;
+  justify-content:center;font-size:9px;font-family:var(--font-d);font-weight:700;
+  border:2px solid rgba(255,255,255,.3);transition:transform .2s;cursor:default;
+}
+.hm-cell:hover{transform:scale(1.12)}
+
+.bfs-grid{display:inline-grid;grid-template-columns:repeat(7,40px);gap:3px;margin:12px 0}
+.bc{
+  width:40px;height:40px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-d);font-size:10px;font-weight:600;
+  border:2px solid var(--border2);background:var(--surf2);color:var(--text-muted);
+  transition:all .4s;
+}
+.bc.p1-start{background:linear-gradient(135deg,#bbf7d0,#86efac);border-color:#22c55e;color:#166534}
+.bc.p2-start{background:linear-gradient(135deg,#bfdbfe,#93c5fd);border-color:#3b82f6;color:#1e40af}
+.bc.blocked-cell{background:linear-gradient(135deg,#c8bfae,#b8ae9a);border-color:#b8a890;color:rgba(80,60,40,.5)}
+.bc.bfs-p1{background:rgba(34,197,94,.22);border-color:rgba(34,197,94,.5);color:#166534}
+.bc.bfs-p2{background:rgba(33,150,243,.22);border-color:rgba(33,150,243,.5);color:#1e40af}
+.bc.bfs-both{background:rgba(147,51,234,.22);border-color:rgba(147,51,234,.5);color:#6b21a8}
+.bc.wave1{background:rgba(34,197,94,.35);border-color:rgba(34,197,94,.7)}
+.bc.wave2{background:rgba(34,197,94,.22);border-color:rgba(34,197,94,.4)}
+.bc.wave3{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.25)}
+
+.cmp-table{width:100%;border-collapse:collapse;margin:14px 0;font-family:var(--font-d)}
+.cmp-table th{
+  background:linear-gradient(135deg,#1e3a5f,#1e3d2a);color:#e2f0ff;
+  padding:10px 14px;font-size:12px;font-weight:700;letter-spacing:.5px;
+  text-align:left;border-bottom:2px solid #2d4a7a;
+}
+.cmp-table td{
+  padding:9px 14px;font-size:12.5px;color:var(--text-dim);
+  border-bottom:1.5px solid var(--border);background:var(--surf2);
+  transition:background .15s;
+}
+.cmp-table tr:hover td{background:var(--surf3)}
+.cmp-table tr:last-child td{border-bottom:none}
+.badge{
+  display:inline-block;font-size:10px;font-weight:700;padding:2px 9px;
+  border-radius:var(--radius-pill);font-family:var(--font-d);letter-spacing:.3px;
+}
+.badge.green{background:var(--p1-dim);color:var(--p1-dark);border:1.5px solid #86efac}
+.badge.blue{background:var(--p2-dim);color:var(--p2-dark);border:1.5px solid #93c5fd}
+.badge.red{background:#fee2e2;color:#dc2626;border:1.5px solid #fca5a5}
+.badge.gold{background:#fffde7;color:#a05000;border:1.5px solid #fde68a}
+.badge.purple{background:#f3e8ff;color:#6b21a8;border:1.5px solid #d8b4fe}
+
+.heur-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
+.heur-card{
+  background:var(--surf2);border:2px solid var(--border);
+  border-radius:var(--radius-lg);padding:14px;
+  box-shadow:0 3px 0 var(--border2);position:relative;overflow:hidden;
+}
+.heur-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+}
+.hc-green::before{background:linear-gradient(90deg,#22c55e,#4ade80)}
+.hc-blue::before{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+.hc-purple::before{background:linear-gradient(90deg,#7c3aed,#c084fc)}
+.hc-orange::before{background:linear-gradient(90deg,#ea580c,#fdba74)}
+.hc-cyan::before{background:linear-gradient(90deg,#0891b2,#67e8f9)}
+.hc-gold::before{background:linear-gradient(90deg,#d97706,#fde68a)}
+.heur-weight{
+  font-family:var(--font-d);font-size:24px;font-weight:700;
+  margin-bottom:4px;line-height:1;
+}
+.heur-name{font-family:var(--font-d);font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px}
+.heur-desc{font-family:var(--font-d);font-size:11.5px;color:var(--text-dim);line-height:1.55}
+.heur-formula{
+  font-family:var(--font-m);font-size:10px;color:#0369a1;
+  background:var(--surf3);border:1px solid var(--border2);
+  border-radius:6px;padding:4px 8px;margin-top:8px;
+}
+
+.ab-diagram{
+  display:flex;flex-direction:column;align-items:center;gap:0;
+  background:#0e1729;border:2px solid #2d4a7a;border-radius:var(--radius-lg);
+  padding:20px;margin:16px 0;overflow-x:auto;
+}
+.ab-row{display:flex;gap:12px;justify-content:center;align-items:center;padding:6px 0;position:relative}
+.ab-node{
+  min-width:60px;padding:6px 10px;border-radius:8px;text-align:center;
+  font-family:var(--font-d);font-size:11px;font-weight:700;
+  transition:transform .2s,box-shadow .2s;cursor:default;
+}
+.ab-node:hover{transform:scale(1.08)}
+.ab-node.max{background:#1e3a5f;color:#60a5fa;border:2px solid #3b82f6}
+.ab-node.min{background:#1e3d2a;color:#4ade80;border:2px solid #22c55e}
+.ab-node.pruned{background:#2d1515;color:#ef4444;border:2px dashed #ef4444;opacity:.7}
+.ab-node.best{background:#1a3020;color:#4ade80;border:2px solid #4ade80;box-shadow:0 0 12px rgba(74,222,128,.4)}
+.ab-node .score{font-size:14px;display:block;margin-top:2px}
+.ab-node .label{font-size:8px;opacity:.7;letter-spacing:.5px}
+.ab-scissors{color:#ef4444;font-size:16px;animation:snip .8s ease-in-out infinite alternate}
+@keyframes snip{from{transform:rotate(-15deg) scale(1)}to{transform:rotate(15deg) scale(1.2)}}
+.ab-connector{
+  height:20px;display:flex;align-items:center;justify-content:center;position:relative;
+  width:100%;
+}
+.ab-line{height:2px;background:#2d4a7a;flex:1}
+.ab-level-label{
+  font-family:var(--font-d);font-size:9px;color:#475569;letter-spacing:1px;
+  position:absolute;left:0;
+}
+
+.strategy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.strat-card{
+  border-radius:var(--radius-lg);padding:16px 18px;
+  border:2px solid;transition:transform .15s;
+}
+.strat-card:hover{transform:translateY(-3px)}
+.strat-card.green{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-color:#86efac}
+.strat-card.blue{background:linear-gradient(135deg,#eff6ff,#dbeafe);border-color:#93c5fd}
+.strat-card.gold{background:linear-gradient(135deg,#fffde7,#fef9c3);border-color:#fde68a}
+.strat-card.red{background:linear-gradient(135deg,#fff1f2,#ffe4e6);border-color:#fca5a5}
+.strat-title{font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.strat-body{font-family:var(--font-d);font-size:12.5px;color:var(--text-dim);line-height:1.65}
+
+.pseudo{
+  background:#0e1729;border:2px solid #2d4a7a;border-radius:var(--radius-lg);
+  padding:18px 22px;margin:14px 0;font-family:var(--font-m);font-size:12px;
+  line-height:1.9;overflow-x:auto;
+}
+.pseudo .kw{color:#f472b6}
+.pseudo .fn{color:#60a5fa}
+.pseudo .num{color:#4ade80}
+.pseudo .str{color:#fbbf24}
+.pseudo .cm{color:#475569;font-style:italic}
+.pseudo .var{color:#e2f0ff}
+.pseudo .op{color:#f472b6}
+.pseudo .indent1{padding-left:20px;display:block}
+.pseudo .indent2{padding-left:40px;display:block}
+.pseudo .indent3{padding-left:60px;display:block}
+
+code{
+  font-family:var(--font-m);font-size:11px;padding:2px 7px;
+  background:var(--surf3);border:1.5px solid var(--border2);
+  border-radius:5px;color:#0369a1;
+}
+
+.divider{height:3px;background:linear-gradient(90deg,transparent,var(--border2),transparent);margin:24px 0;border-radius:var(--radius-pill)}
+
+.pill-row{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}
+.pill{
+  font-family:var(--font-d);font-size:11px;font-weight:600;padding:4px 13px;
+  border-radius:var(--radius-pill);border:1.5px solid;
+}
+.pill.green{background:var(--p1-dim);color:var(--p1-dark);border-color:#86efac}
+.pill.blue{background:var(--p2-dim);color:var(--p2-dark);border-color:#93c5fd}
+.pill.purple{background:#f3e8ff;color:#6b21a8;border-color:#d8b4fe}
+.pill.gold{background:#fffde7;color:#a05000;border-color:#fde68a}
+.pill.red{background:#fee2e2;color:#dc2626;border-color:#fca5a5}
+.pill.cyan{background:#ecfeff;color:#0e7490;border-color:#a5f3fc}
+
+.toc{
+  background:rgba(255,255,255,.82);backdrop-filter:blur(12px);
+  border:3px solid rgba(255,255,255,.9);border-radius:var(--radius-xl);
+  padding:24px 28px;margin-bottom:28px;
+  box-shadow:var(--shadow-card);
+}
+.toc-title{font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.toc-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:7px}
+.toc-item{
+  font-family:var(--font-d);font-size:12px;padding:6px 12px;
+  background:var(--surf2);border:1.5px solid var(--border);border-radius:var(--radius);
+  color:var(--text-dim);text-decoration:none;transition:all .15s;
+  box-shadow:0 2px 0 var(--border);display:flex;align-items:center;gap:7px;
+}
+.toc-item:hover{border-color:var(--border3);color:var(--text);transform:translateX(2px)}
+.toc-num{
+  width:20px;height:20px;border-radius:50%;background:var(--p2-dim);
+  color:var(--p2-dark);font-size:9px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-family:var(--font-d);
+}
+
+.info-box{
+  border-radius:var(--radius-lg);padding:14px 18px;margin:14px 0;
+  display:flex;align-items:flex-start;gap:12px;
+  font-family:var(--font-d);font-size:13px;line-height:1.65;
+}
+.info-box.blue{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #93c5fd;color:#1e40af}
+.info-box.green{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #86efac;color:#166534}
+.info-box.gold{background:linear-gradient(135deg,#fffde7,#fef9c3);border:2px solid #fde68a;color:#92400e}
+.info-box.red{background:linear-gradient(135deg,#fff1f2,#ffe4e6);border:2px solid #fca5a5;color:#9f1239}
+.info-box .ib-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.info-box .ib-body strong{font-weight:700}
+
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0}
+.legend-item{display:flex;align-items:center;gap:6px;font-family:var(--font-d);font-size:11.5px;color:var(--text-dim)}
+.legend-dot{width:14px;height:14px;border-radius:4px;flex-shrink:0;border:1.5px solid rgba(0,0,0,.1)}
+
+.footer{
+  text-align:center;padding:30px;font-family:var(--font-d);font-size:12px;
+  color:rgba(255,255,255,.65);letter-spacing:1.5px;text-shadow:0 1px 3px rgba(0,60,120,.3);
+}
+
+.back-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font-d);font-size:13px;font-weight:700;
+  padding:8px 18px;border-radius:var(--radius-pill);
+  background:rgba(255,255,255,.9);border:2.5px solid rgba(255,255,255,.7);
+  color:#1565c0;cursor:pointer;text-decoration:none;
+  box-shadow:0 3px 0 rgba(0,60,120,.2);transition:all .15s;
+  margin-bottom:28px;box-shadow:var(--shadow-card);
+}
+.back-btn:hover{transform:translateY(-2px);box-shadow:0 5px 0 rgba(0,60,120,.2),0 8px 20px rgba(0,60,120,.12)}
+
+.anim-num{
+  font-family:var(--font-d);font-size:32px;font-weight:700;
+  animation:countUp .8s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes countUp{from{transform:scale(0.6);opacity:0}to{transform:scale(1);opacity:1}}
+
+.stat-row{display:flex;flex-wrap:wrap;gap:12px;margin:14px 0}
+.stat-chip{
+  flex:1;min-width:100px;background:var(--surf2);border:2px solid var(--border);
+  border-radius:var(--radius-lg);padding:14px;text-align:center;
+  box-shadow:0 3px 0 var(--border2);
+}
+.stat-chip .sc-label{font-family:var(--font-d);font-size:10px;color:var(--text-muted);letter-spacing:.5px;margin-bottom:5px}
+.stat-chip .sc-val{font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--text)}
+.stat-chip .sc-sub{font-family:var(--font-d);font-size:10px;color:var(--text-muted);margin-top:2px}
+
+.sec-num{
+  display:inline-block;font-family:var(--font-d);font-size:9px;font-weight:700;
+  letter-spacing:2px;padding:3px 10px;border-radius:var(--radius-pill);
+  background:var(--p2-dim);color:var(--p2-dark);border:1.5px solid #93c5fd;
+  margin-bottom:10px;
+}
+
+.nav-link.active{
+  background:linear-gradient(135deg,#fff3cd,#fffde7);
+  border-color:var(--accent);color:#a05000;
+  box-shadow:0 2px 0 var(--accent-dark);
+}
+
+@media(max-width:700px){
+  .hero-title{font-size:clamp(36px,12vw,62px)}
+  .section{padding:20px 16px}
+  .formula{font-size:11px}
+  .pseudo{font-size:11px}
+  .nav-links{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">TRAP<span>GRID</span> <span style="font-size:13px;color:var(--text-muted);font-weight:400;letter-spacing:.5px">Theory</span></div>
+  <div class="nav-links">
+    <a class="nav-link" href="#overview">Overview</a>
+    <a class="nav-link" href="#bfs">BFS</a>
+    <a class="nav-link" href="#minimax">Minimax</a>
+    <a class="nav-link" href="#alphabeta">Alpha-Beta</a>
+    <a class="nav-link" href="#heuristic">Heuristic</a>
+    <a class="nav-link" href="#adaptive">Adaptive Depth</a>
+    <a class="nav-link" href="#strategy">Strategy</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge">◈ ALGORITHM DEEP DIVE ◈</div>
+  <h1 class="hero-title">TRAP<span>GRID</span></h1>
+  <p class="hero-sub">Theory · Algorithms · Formulas · Strategy</p>
+  <div class="hero-tags">
+    <span class="htag">BFS</span>
+    <span class="htag">Minimax</span>
+    <span class="htag">Alpha-Beta Pruning</span>
+    <span class="htag">Move Ordering</span>
+    <span class="htag">Adaptive Depth</span>
+    <span class="htag">Heuristic Design</span>
+    <span class="htag">Game Theory</span>
+  </div>
+  <div class="hero-scroll">↓ Scroll to explore ↓</div>
+</div>
+
+<div class="page">
+
+<div class="toc" data-animate>
+  <div class="toc-title"><i class="fa-solid fa-list" style="color:var(--p2)"></i> Contents</div>
+  <div class="toc-list">
+    <a class="toc-item" href="#overview"><span class="toc-num">1</span>Game Overview</a>
+    <a class="toc-item" href="#bfs"><span class="toc-num">2</span>BFS Algorithm</a>
+    <a class="toc-item" href="#minimax"><span class="toc-num">3</span>Minimax Search</a>
+    <a class="toc-item" href="#alphabeta"><span class="toc-num">4</span>Alpha-Beta Pruning</a>
+    <a class="toc-item" href="#moveorder"><span class="toc-num">5</span>Move Ordering</a>
+    <a class="toc-item" href="#heuristic"><span class="toc-num">6</span>Heuristic Function</a>
+    <a class="toc-item" href="#adaptive"><span class="toc-num">7</span>Adaptive Depth</a>
+    <a class="toc-item" href="#walldanger"><span class="toc-num">8</span>Wall Danger & Isolation</a>
+    <a class="toc-item" href="#strategy"><span class="toc-num">9</span>Strategy Guide</a>
+    <a class="toc-item" href="#complexity"><span class="toc-num">10</span>Complexity Analysis</a>
+  </div>
+</div>
+
+<section class="section" id="overview" data-animate>
+  <div class="sec-header">
+    <div class="sec-icon green"><i class="fa-solid fa-chess-board"></i></div>
+    <div class="sec-title-wrap">
+      <div class="sec-num">SECTION 01</div>
+      <div class="sec-title">Game Overview & Rules</div>
+      <div class="sec-subtitle">The isolation game on a 7×7 grid</div>
+    </div>
+  </div>
+
+  <p class="prose">TrapGrid is a two-player combinatorial strategy game based on the classic Isolation concept. Players move on a 7×7 grid. Every cell a player leaves behind becomes permanently blocked. The player who cannot make a valid move loses.</p>
+
+  <div class="stat-row">
+    <div class="stat-chip"><div class="sc-label">Grid Size</div><div class="sc-val">7×7</div><div class="sc-sub">49 cells total</div></div>
+    <div class="stat-chip"><div class="sc-label">Move Directions</div><div class="sc-val">4</div><div class="sc-sub">Up Down Left Right</div></div>
+    <div class="stat-chip"><div class="sc-label">Starting Cells</div><div class="sc-val">(0,0)</div><div class="sc-sub">P1 top-left</div></div>
+    <div class="stat-chip"><div class="sc-label">Starting Cells</div><div class="sc-val">(6,6)</div><div class="sc-sub">P2 bottom-right</div></div>
+    <div class="stat-chip"><div class="sc-label">Win Condition</div><div class="sc-val">Trap</div><div class="sc-sub">Opponent 0 moves</div></div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon"><i class="fa-solid fa-crosshairs" style="color:var(--p1-dark)"></i></div>
+      <div class="card-title">Objective</div>
+      <div class="card-body">Force your opponent into a position where they have zero valid adjacent moves. The last player to move wins.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon"><i class="fa-solid fa-ban" style="color:#dc2626"></i></div>
+      <div class="card-title">Trail of Blocks</div>
+      <div class="card-body">Every cell you leave becomes a permanent blocker (✕). You can never revisit it — the board shrinks every turn.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon"><i class="fa-solid fa-arrows-up-down-left-right" style="color:var(--p2-dark)"></i></div>
+      <div class="card-title">Legal Moves</div>
+      <div class="card-body">From position (r,c) you may move to (r-1,c), (r+1,c), (r,c-1), or (r,c+1) — only if that cell is empty (value = 0).</div>
+    </div>
+    <div class="card">
+      <div class="card-icon"><i class="fa-solid fa-flag-checkered" style="color:#d97706"></i></div>
+      <div class="card-title">Game End</div>
+      <div class="card-body">When the current player has no valid moves after refreshing from their position, the previous mover is declared winner.</div>
+    </div>
+  </div>
+
+  <div class="formula-box">
+    <div class="formula-label">Board State Encoding</div>
+    <div class="formula">
+<span class="var">CELL_EMPTY</span>   <span class="op">=</span>  <span class="num">0</span>   <span class="comment">// free cell — can be moved into</span>
+<span class="var">CELL_P1</span>      <span class="op">=</span>  <span class="num">1</span>   <span class="comment">// Player 1 is currently here</span>
+<span class="var">CELL_P2</span>      <span class="op">=</span>  <span class="num">2</span>   <span class="comment">// Player 2 / AI is currently here</span>
+<span class="var">CELL_BLOCKED</span> <span class="op">=</span> <span class="num">-1</span>   <span class="comment">// permanently blocked trail cell</span>
+</div>
+  </div>
+</section>
+
+<section class="section" id="bfs" data-animate>
+  <div class="sec-header">
+    <div class="sec-icon blue"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+    <div class="sec-title-wrap">
+      <div class="sec-num">SECTION 02</div>
+      <div class="sec-title">BFS — Breadth-First Search</div>
+      <div class="sec-subtitle">Measuring territory & breathing room</div>
+    </div>
+  </div>
+
+  <p class="prose">BFS is the backbone of the heuristic. It performs a flood-fill from a player's current position and counts every empty cell reachable without crossing blocked or occupied cells. This count equals the player's territory — how much of the board they still own. A player with large territory has more room to manoeuvre; a player cornered into a small pocket is losing.</p>
+
+  <div class="info-box blue">
+    <div class="ib-icon"><i class="fa-solid fa-lightbulb"></i></div>
+    <div class="ib-body">BFS guarantees the correct count even for irregular board shapes and isolated pockets — unlike a naive "count empty neighbors" approach which would miss cells behind corners.</div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num b">1</div>
+      <div class="step-body">
+        <div class="step-title">Initialise</div>
+        <div class="step-desc">Create a <code>visited[7][7]</code> boolean grid, all false. Push the player's position onto a queue. Mark it visited. Set <code>count = 0</code>.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num b">2</div>
+      <div class="step-body">
+        <div class="step-title">Dequeue & Count</div>
+        <div class="step-desc">Pop a cell from the front of the queue. Increment <code>count</code>. For each of 4 neighbours: skip if out-of-bounds, already visited, or not <code>CELL_EMPTY</code>.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num b">3</div>
+      <div class="step-body">
+        <div class="step-title">Enqueue Valid Neighbours</div>
+        <div class="step-desc">Mark each valid neighbour as visited and push to the queue. This prevents double-counting and infinite loops.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num b">4</div>
+      <div class="step-body">
+        <div class="step-title">Repeat Until Empty</div>
+        <div class="step-desc">Continue until the queue is empty. The final <code>count</code> equals the number of reachable cells — the player's territory score.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="formula-box">
+    <div class="formula-label">BFS Pseudocode</div>
+    <div class="formula">
+<span class="kw">function</span> <span class="fn">countReachable</span>(<span class="var">board</span>, <span class="var">startRow</span>, <span class="var">startCol</span>):
+  <span class="var">visited</span> <span class="op">←</span> <span class="num">false</span>[<span class="num">7</span>][<span class="num">7</span>]
+  <span class="var">queue</span>   <span class="op">←</span> [(<span class="var">startRow</span>, <span class="var">startCol</span>)]
+  <span class="var">visited</span>[<span class="var">startRow</span>][<span class="var">startCol</span>] <span class="op">=</span> <span class="num">true</span>
+  <span class="var">count</span>   <span class="op">←</span> <span class="num">0</span>
+
+  <span class="kw">while</span> <span class="var">queue</span> <span class="op">not empty</span>:
+    (<span class="var">r</span>, <span class="var">c</span>) <span class="op">←</span> <span class="fn">dequeue</span>(<span class="var">queue</span>)
+    <span class="var">count</span><span class="op">++</span>
+    <span class="kw">for</span> (<span class="var">dr</span>, <span class="var">dc</span>) <span class="kw">in</span> [(-1,0),(1,0),(0,-1),(0,1)]:
+      (<span class="var">nr</span>, <span class="var">nc</span>) <span class="op">←</span> (<span class="var">r</span><span class="op">+</span><span class="var">dr</span>, <span class="var">c</span><span class="op">+</span><span class="var">dc</span>)
+      <span class="kw">if</span> <span class="fn">inBounds</span>(<span class="var">nr</span>,<span class="var">nc</span>) <span class="op">and not</span> <span class="var">visited</span>[<span class="var">nr</span>][<span class="var">nc</span>] <span class="op">and</span> <span class="var">board</span>[<span class="var">nr</span>][<span class="var">nc</span>] <span class="op">==</span> <span class="num">0</span>:
+        <span class="var">visited</span>[<span class="var">nr</span>][<span class="var">nc</span>] <span class="op">=</span> <span class="num">true</span>
+        <span class="fn">enqueue</span>(<span class="var">queue</span>, (<span class="var">nr</span>,<span class="var">nc</span>))
+
+  <span class="kw">return</span> <span class="var">count</span>   <span class="comment">// territory size</span></div>
+  </div>
+
+  <p class="prose" style="margin-top:16px">Territory Map: Running BFS from both players simultaneously produces a coloured zone map. Cells reachable only by P1 are green, only by P2 are blue, and cells reachable by both (contested) are purple.</p>
+
+  <div style="overflow-x:auto;padding-bottom:8px">
+    <div class="bfs-grid" id="bfs-demo-grid"></div>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(34,197,94,.4);border-color:#22c55e"></div>P1 exclusive territory</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(33,150,243,.4);border-color:#3b82f6"></div>P2 exclusive territory</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(147,51,234,.4);border-color:#9333ea"></div>Contested (both can reach)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,#bbf7d0,#86efac);border-color:#22c55e"></div>P1 position</div>
+    <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,#bfdbfe,#93c5fd);border-color:#3b82f6"></div>P2 position</div>
+    <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,#c8bfae,#b8ae9a);border-color:#b8a890"></div>Blocked</div>
+  </div>
+
+  <div class="info-box gold" style="margin-top:14px">
+    <div class="ib-icon"><i class="fa-solid fa-clock"></i></div>
+    <div class="ib-body">Time complexity: O(R × C) = O(49) per BFS call. In the worst case we call BFS at every node in the Minimax tree — but with alpha-beta pruning this stays tractable.</div>
+  </div>
+</section>
+
+<section class="section" id="minimax" data-animate>
+  <div class="sec-header">
+    <div class="sec-icon purple"><i class="fa-solid fa-tree"></i></div>
+    <div class="sec-title-wrap">
+      <div class="sec-num">SECTION 03</div>
+      <div class="sec-title">Minimax Search</div>
+      <div class="sec-subtitle">Recursive adversarial game tree search</div>
+    </div>
+  </div>
+
+  <p class="prose">Minimax is a recursive algorithm for two-player zero-sum games. The AI (maximiser) tries to pick the move that leads to the highest heuristic score. The opponent (minimiser) is assumed to play perfectly and will always choose the move that is worst for the AI. The algorithm explores all possible futures up to a given depth, then evaluates leaf nodes with the heuristic function.</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon"><i class="fa-solid fa-arrow-trend-up" style="color:var(--p2-dark)"></i></div>
+      <div class="card-title">Maximiser (AI, P2)</div>
+      <div class="card-body">At MAX nodes the AI picks the child with the highest score. It wants to find a move that leaves it in the best position.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon"><i class="fa-solid fa-arrow-trend-down" style="color:var(--p1-dark)"></i></div>
+      <div class="card-title">Minimiser (P1)</div>
+      <div class="card-body">At MIN nodes the opponent picks the child with the lowest score. They are assumed to play optimally against the AI.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon"><i class="fa-solid fa-circle-dot" style="color:#d97706"></i></div>
+      <div class="card-title">Terminal / Leaf Nodes</div>
+      <div class="card-body">If a player is trapped (no moves), return <code>+100,000</code> (AI wins) or <code>-100,000</code> (AI loses). At depth 0, call the heuristic.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon"><i class="fa-solid fa-up-long" style="color:#7c3aed"></i></div>
+      <div class="card-title">Value Propagation</div>
+      <div class="card-body">Scores bubble up: MIN takes the minimum of its children, MAX takes the maximum. The root returns the best move found.</div>
+    </div>
+  </div>
+
+  <div class="ab-diagram">
+    <div class="ab-level-label" style="position:relative;align-self:flex-start;margin-bottom:4px;color:#60a5fa;font-family:var(--font-d);font-size:10px;letter-spacing:1.5px">MINIMAX TREE — SIMPLIFIED 2-PLY EXAMPLE</div>
+    <div class="ab-row">
+      <div class="ab-node max best">MAX (AI)<span class="score">12</span><span class="label">ROOT</span></div>
+    </div>
+    <div class="ab-row" style="gap:6px">
+      <div style="width:2px;height:20px;background:#2d4a7a;margin:0 auto"></div>
+    </div>
+    <div class="ab-row" style="gap:18px">
+      <div class="ab-node min">MIN<span class="score">12</span><span class="label">move A</span></div>
+      <div class="ab-node min">MIN<span class="score">7</span><span class="label">move B</span></div>
+      <div class="ab-node min">MIN<span class="score">4</span><span class="label">move C</span></div>
+    </div>
+    <div class="ab-row" style="gap:18px;margin-top:4px">
+      <div class="ab-node max best">MAX<span class="score">12</span><span class="label">← best</span></div>
+      <div class="ab-node max">MAX<span class="score">7</span><span class="label"></span></div>
+      <div class="ab-node max">MAX<span class="score">4</span><span class="label"></span></div>
+      <div class="ab-node max" style="opacity:.5">MAX<span class="score">15</span><span class="label">not chosen</span></div>
+      <div class="ab-node max" style="opacity:.5">MAX<span class="score">9</span><span class="label"></span></div>
+    </div>
+  </div>
+
+  <div class="formula-box">
+    <div class="formula-label">Minimax Core Logic</div>
+    <div class="formula">
+<span class="kw">function</span> <span class="fn">minimax</span>(<span class="var">board</span>, <span class="var">depth</span>, <span class="var">α</span>, <span class="var">β</span>, <span class="var">isMax</span>, <span class="var">p1</span>, <span class="var">p2</span>):
+
+  <span class="comment">// Terminal: someone is trapped</span>
+  <span class="kw">if</span> <span class="var">isMax</span> <span class="op">and</span> <span class="fn">moves</span>(<span class="var">p2</span>)<span class="op">.length</span> <span class="op">==</span> <span class="num">0</span>: <span class="kw">return</span> <span class="num">-100000</span>  <span class="comment">// AI trapped</span>
+  <span class="kw">if</span> <span class="op">not</span> <span class="var">isMax</span> <span class="op">and</span> <span class="fn">moves</span>(<span class="var">p1</span>)<span class="op">.length</span> <span class="op">==</span> <span class="num">0</span>: <span class="kw">return</span> <span class="num">+100000</span>  <span class="comment">// P1 trapped</span>
+
+  <span class="comment">// Leaf: depth exhausted → evaluate</span>
+  <span class="kw">if</span> <span class="var">depth</span> <span class="op">==</span> <span class="num">0</span>: <span class="kw">return</span> <span class="fn">heuristic</span>(<span class="var">board</span>, <span class="var">p1</span>, <span class="var">p2</span>)
+
+  <span class="var">best</span> <span class="op">←</span> <span class="var">isMax</span> ? <span class="num">-∞</span> : <span class="num">+∞</span>
+  <span class="kw">for</span> <span class="var">move</span> <span class="kw">in</span> <span class="fn">orderMoves</span>(<span class="var">board</span>, <span class="var">isMax</span> ? <span class="fn">moves</span>(<span class="var">p2</span>) : <span class="fn">moves</span>(<span class="var">p1</span>)):
+    <span class="fn">applyMove</span>(<span class="var">board</span>, <span class="var">move</span>)
+    <span class="var">score</span> <span class="op">←</span> <span class="fn">minimax</span>(<span class="var">board</span>, <span class="var">depth</span><span class="op">-1</span>, <span class="var">α</span>, <span class="var">β</span>, <span class="op">not</span> <span class="var">isMax</span>, ...)
+    <span class="fn">undoMove</span>(<span class="var">board</span>, <span class="var">move</span>)
+
+    <span class="kw">if</span> <span class="var">isMax</span>: <span class="var">best</span> <span class="op">=</span> <span class="fn">max</span>(<span class="var">best</span>, <span class="var">score</span>); <span class="var">α</span> <span class="op">=</span> <span class="fn">max</span>(<span class="var">α</span>, <span class="var">score</span>)
+    <span class="kw">else</span>:     <span class="var">best</span> <span class="op">=</span> <span class="fn">min</span>(<span class="var">best</span>, <span class="var">score</span>); <span class="var">β</span> <span class="op">=</span> <span class="fn">min</span>(<span class="var">β</span>, <span class="var">score</span>)
+    <span class="kw">if</span> <span class="var">β</span> <span class="op">≤</span> <span class="var">α</span>: <span class="kw">break</span>  <span class="comment">// α-β cut</span>
+
+  <span class="kw">return</span> <span class="var">best</span></div>
+  </div>
+</section>
+
+<section class="section" id="alphabeta" data-animate>
+  <div class="sec-header">
+    <div class="sec-icon orange"><i class="fa-solid fa-scissors"></i></div>
+    <div class="sec-title-wrap">
+      <div class="sec-num">SECTION 04</div>
+      <div class="sec-title">Alpha-Beta Pruning</div>
+      <div class="sec-subtitle">Cutting impossible branches to search deeper faster</div>
+    </div>
+  </div>
+
+  <p class="prose">Alpha-Beta pruning is an optimisation layered on top of Minimax. It maintains two values — alpha and beta — which represent the best already-explored options for the maximiser and minimiser respectively. When β ≤ α, the current branch cannot influence the final decision and is cut (pruned). This can reduce the number of nodes from O(b^d) to O(b^(d/2)), effectively doubling the searchable depth.</p>
+
+  <div class="cards" style="grid-template-columns:1fr 1fr">
+    <div class="card">
+      <div class="card-title" style="color:var(--p2-dark)">Alpha — MAX bound</div>
+      <div class="card-body">The best guaranteed score the maximiser has found so far along this path. Starts at <code>-∞</code>. Updated when MAX finds a better move. If a MIN node's value drops below alpha, MAX already has something better — prune remaining siblings.</div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--p1-dark)">Beta — MIN bound</div>
+      <div class="card-body">The best guaranteed score the minimiser has found so far along this path. Starts at <code>+∞</code>. Updated when MIN finds a worse move for MAX. If a MAX node's value exceeds beta, MIN already has something better — prune remaining siblings.</div>
+    </div>
+  </div>
+
+  <div class="ab-diagram">
+    <div style="font-family:var(--font-d);font-size:10px;color:#60a5fa;letter-spacing:1.5px;align-self:flex-start;margin-bottom:8px">ALPHA-BETA PRUNING EXAMPLE</div>
+
+    <div class="ab-row">
+      <div class="ab-node max best">MAX<span class="score">α=5</span><span class="label">root</span></div>
+    </div>
+    <div class="ab-row" style="gap:32px">
+      <div class="ab-node min">MIN<span class="score">β=5</span></div>
+      <div class="ab-node min pruned">MIN ✂<span class="score">pruned</span><span class="label">β&lt;α</span></div>
+    </div>
+    <div class="ab-row" style="gap:18px;align-items:flex-start">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+        <div class="ab-node max">MAX<span class="score">5</span></div>
+        <div class="ab-node max">MAX<span class="score">3</span></div>
+      </div>
+      <div class="ab-scissors"><i class="fa-solid fa-scissors"></i></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.45">
+        <div class="ab-node max pruned">MAX<span class="score">?</span></div>
+        <div class="ab-node max pruned">MAX<span class="score">?</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="formula-box">
+    <div class="formula-label">Cut Condition</div>
+    <div class="formula">
+<span class="comment">// β-cutoff (at MAX node): MIN parent won't allow this path</span>
+<span class="kw">if</span> <span class="var">score</span> <span class="op">≥</span> <span class="var">β</span>:
+  <span class="var">nodesPruned</span> <span class="op">+=</span> <span class="var">remaining_siblings</span>
+  <span class="kw">break</span>                  <span class="comment">// prune all remaining siblings</span>
+
+<span class="comment">// α-cutoff (at MIN node): MAX parent won't allow this path</span>
+<span class="kw">if</span> <span class="var">score</span> <span class="op">≤</span> <span class="var">α</span>:
+  <span class="var">nodesPruned</span> <span class="op">+=</span> <span class="var">remaining_siblings</span>
+  <span class="kw">break</span>
+
+<span class="comment">// Efficiency metric tracked in real-time</span>
+<span class="var">pruningEfficiency</span> <span class="op">=</span> <span class="var">nodesPruned</span> <span class="op">/</span> (<span class="var">nodesVisited</span> <span class="op">+</span> <span class="var">nodesPruned</span>) <span class="op">×</span> <span class="num">100</span><span class="op">%</span></div>
+  </div>
+
+  <div class="cmp-table" style="overflow:auto">
+    <table class="cmp-table">
+      <tr><th>Property</th><th>Plain Minimax</th><th>Minimax + Alpha-Beta</th></tr>
+      <tr><td>Time complexity</td><td><span class="badge red">O(b^d)</span></td><td><span class="badge green">O(b^(d/2))</span> best case</td></tr>
+      <tr><td>Nodes at depth 5 (b≈4)</td><td><span class="badge red">~1024</span></td><td><span class="badge green">~32</span> best case</td></tr>
+      <tr><td>Depth at same cost</td><td><span class="badge gold">3–4</span></td><td><span class="badge green">5–8</span> with move ordering</td></tr>
+      <tr><td>Move ordering benefit</td><td><span class="badge red">None</span></td><td><span class="badge green">Critical — sorts to maximise cuts</span></td></tr>
+      <tr><td>Correctness</td><td><span class="badge green">Exact</span></td><td><span class="badge green">Exact (same result)</span></td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="section" id="moveorder" data-animate>
+  <div class="sec-header">
+    <div class="sec-icon cyan"><i class="fa-solid fa-sort"></i></div>
+    <div class="sec-title-wrap">
+      <div class="sec-num">SECTION 05</div>
+      <div class="sec-title">Move Ordering</div>
+      <div class="sec-subtitle">Searching best moves first to maximise pruning</div>
+    </div>
+  </div>
+
+  <p class="prose">Alpha-Beta pruning works best when the strongest moves are searched first. If the first move examined is already close to optimal, subsequent branches are quickly cut. TrapGrid uses a quick pre-sort of all legal moves using a lightweight BFS evaluation before calling the full Minimax tree.</p>
+
+  <div class="formula-box">
+    <div class="formula-label">Move Ordering Score (quick eval, O(N) per move)</div>
+    <div class="formula">
+<span class="comment">// For maximiser (AI) evaluating move m → new_p2:</span>
+<span class="var">quickScore</span> <span class="op">=</span> <span class="fn">BFS</span>(<span class="var">new_p2</span>) <span class="op">× 2</span>
+            <span class="op">-</span> <span class="fn">BFS</span>(<span class="var">p1_pos</span>)           <span class="comment">// maximise AI room, minimise P1 room</span>
+            <span class="op">+</span> <span class="var">CENTER_BONUS</span>[<span class="var">m.row</span>][<span class="var">m.col</span>] <span class="op">× 0.2</span>  <span class="comment">// prefer central moves</span>
+
+<span class="comment">// For minimiser (P1) evaluating move m → new_p1:</span>
+<span class="var">quickScore</span> <span class="op">=</span> <span class="op">-</span><span class="fn">BFS</span>(<span class="var">new_p1</span>)
+            <span class="op">+</span> <span class="fn">BFS</span>(<span class="var">p2_pos</span>) <span class="op">× 2</span>    <span class="comment">// minimise P1 room, keep AI breathing</span>
+            <span class="op">+</span> <span class="var">CENTER_BONUS</span>[<span class="var">m.row</span>][<span class="var">m.col</span>] <span class="op">× 0.2</span>
+
+<span class="comment">// Sort moves descending for MAX, ascending for MIN</span>
+<span class="var">orderedMoves</span> <span class="op">←</span> <span class="fn">sort</span>(<span class="var">moves</span>, <span class="kw">by</span> <span class="var">quickScore</span>)</div>
+  </div>
+
+  <div class="info-box green">
+    <div class="ib-icon"><i class="fa-solid fa-bolt"></i></div>
+    <div class="ib-body">In practice, move ordering combined with alpha-beta pruning saves 40–70% of node evaluations compared to searching in an unordered fashion. The AI panel's "Efficiency %" stat directly measures this.</div>
+  </div>
+</section>
+
+<section class="section" id="heuristic" data-animate>
+  <div class="sec-header">
+    <div class="sec-icon gold"><i class="fa-solid fa-scale-balanced"></i></div>
+    <div class="sec-title-wrap">
+      <div class="sec-num">SECTION 06</div>
+      <div class="sec-title">Heuristic Function</div>
+      <div class="sec-subtitle">The multi-component board evaluation formula</div>
+    </div>
+  </div>
+
+  <p class="prose">At depth-0 leaf nodes (and for logging/display), the game state is evaluated by a weighted multi-component heuristic. A positive result means the AI is winning; negative means the human is ahead. The formula balances long-term territory ownership with immediate tactical pressure.</p>
+
+  <div class="formula-box">
+    <div class="formula-label">Master Heuristic Formula</div>
+    <div class="formula">
+<span class="var">score</span>  <span class="op">=</span>  (<span class="var">aiTerritory</span>   <span class="op">-</span> <span class="var">oppTerritory</span>)   <span class="op">×</span> <span class="num">2.5</span>    <span class="comment">// territory weight</span>
+       <span class="op">+</span>  (<span class="var">aiImmediate</span>   <span class="op">-</span> <span class="var">oppImmediate</span>)   <span class="op">×</span> <span class="num">3.0</span>    <span class="comment">// immediate mobility</span>
+       <span class="op">+</span>  <span class="var">manhattanDist</span>(<span class="var">p1</span>, <span class="var">p2</span>)           <span class="op">×</span> <span class="num">0.3</span>    <span class="comment">// separation bonus</span>
+       <span class="op">+</span>  (<span class="var">aiCenter</span>      <span class="op">-</span> <span class="var">oppCenter</span>)              <span class="comment">// center control</span>
+       <span class="op">+</span>  (<span class="var">oppWallDanger</span> <span class="op">-</span> <span class="var">aiWallDanger</span>)   <span class="op">×</span> <span class="num">1.5</span>    <span class="comment">// wall safety</span>
+       <span class="op">-</span>  <span class="fn">isolationPenalty</span>(<span class="var">aiMobility</span>, <span class="var">aiImmediate</span>)       <span class="comment">// AI low-mobility penalty</span>
+       <span class="op">+</span>  <span class="fn">isolationBonus</span> (<span class="var">oppMobility</span>, <span class="var">oppImmediate</span>)      <span class="comment">// Opp low-mobility bonus</span>
+
+<span class="comment">// Terminals override heuristic entirely:</span>
+<span class="var">SCORE_WIN</span>  <span class="op">=</span>  <span class="num">+100000</span>   <span class="comment">// P1 has no moves → AI wins</span>
+<span class="var">SCORE_LOSE</span> <span class="op">=</span>  <span class="num">-100000</span>   <span class="comment">// AI has no moves → AI loses</span></div>
+  </div>
+
+  <div class="heur-grid">
+    <div class="heur-card hc-green">
+      <div class="heur-weight" style="color:var(--p1-dark)">×2.5</div>
+      <div class="heur-name">Territory Score</div>
+      <div class="heur-desc">BFS reachable cells for AI minus BFS reachable cells for P1. The most important long-term factor.</div>
+      <div class="heur-formula">(aiTerritory − oppTerritory) × 2.5</div>
+    </div>
+    <div class="heur-card hc-blue">
+      <div class="heur-weight" style="color:var(--p2-dark)">×3.0</div>
+      <div class="heur-name">Immediate Mobility</div>
+      <div class="heur-desc">Count of direct adjacent empty cells — the most urgent tactical measure. Higher weight than territory.</div>
+      <div class="heur-formula">(aiImmediate − oppImmediate) × 3.0</div>
+    </div>
+    <div class="heur-card hc-cyan">
+      <div class="heur-weight" style="color:#0891b2">×0.3</div>
+      <div class="heur-name">Distance Bonus</div>
+      <div class="heur-desc">Manhattan distance between players. Larger gap = AI not yet cornered and has time to manoeuvre.</div>
+      <div class="heur-formula">|r1−r2| + |c1−c2|) × 0.3</div>
+    </div>
+    <div class="heur-card hc-gold">
+      <div class="heur-weight" style="color:#d97706">×0.4</div>
+      <div class="heur-name">Center Control</div>
+      <div class="heur-desc">Precomputed bonus table — centre cells score 6, edges score ~1. Central positions have more escape routes.</div>
+      <div class="heur-formula">(6 − |r−3| − |c−3|) × 0.4</div>
+    </div>
+    <div class="heur-card hc-orange">
+      <div class="heur-weight" style="color:#ea580c">×1.5</div>
+      <div class="heur-name">Wall Danger</div>
+      <div class="heur-desc">Penalises being near corners/edges. Corner = +4 danger, edge = +2 danger, plus low immediate moves penalty.</div>
+      <div class="heur-formula">(oppWallDanger − aiWallDanger) × 1.5</div>
+    </div>
+    <div class="heur-card hc-purple">
+      <div class="heur-weight" style="color:#7c3aed">Var</div>
+      <div class="heur-name">Isolation Penalty</div>
+      <div class="heur-desc">Non-linear penalty/bonus for critically low mobility. Trapping the opponent yields huge bonuses; being trapped yourself is heavily penalised.</div>
+      <div class="heur-formula">imm=0:±200/300, mob&lt;4:±80, &lt;8:±35</div>
+    </div>
+  </div>
+
+  <div class="formula-box" style="margin-top:18px">
+    <div class="formula-label">Wall Danger Detail</div>
+    <div class="formula">
+<span class="kw">function</span> <span class="fn">getWallDanger</span>(<span class="var">board</span>, <span class="var">pos</span>):
+  <span class="var">moves</span>    <span class="op">←</span> <span class="fn">getValidMoves</span>(<span class="var">board</span>, <span class="var">pos</span>)
+  <span class="var">isEdge</span>   <span class="op">←</span> <span class="var">pos.row</span> <span class="op">∈</span> {<span class="num">0</span>,<span class="num">6</span>} <span class="op">OR</span> <span class="var">pos.col</span> <span class="op">∈</span> {<span class="num">0</span>,<span class="num">6</span>}
+  <span class="var">isCorner</span> <span class="op">←</span> <span class="var">pos.row</span> <span class="op">∈</span> {<span class="num">0</span>,<span class="num">6</span>} <span class="op">AND</span> <span class="var">pos.col</span> <span class="op">∈</span> {<span class="num">0</span>,<span class="num">6</span>}
+  <span class="var">danger</span>   <span class="op">←</span> <span class="num">0</span>
+  <span class="kw">if</span> <span class="var">isCorner</span>: <span class="var">danger</span> <span class="op">+=</span> <span class="num">4</span>
+  <span class="kw">elif</span> <span class="var">isEdge</span>: <span class="var">danger</span> <span class="op">+=</span> <span class="num">2</span>
+  <span class="var">danger</span>   <span class="op">+=</span> <span class="fn">max</span>(<span class="num">0</span>, <span class="num">2</span> <span class="op">-</span> <span class="var">moves</span><span class="op">.length</span>) <span class="op">×</span> <span class="num">3</span>   <span class="comment">// very few moves = extra danger</span>
+  <span class="kw">return</span> <span class="var">danger</span></div>
+  </div>
+
+  <div class="formula-box">
+    <div class="formula-label">Center Bonus Lookup Table (precomputed)</div>
+    <div class="formula">
+<span class="comment">// For cell at (r, c) on 7×7 grid, centre = (3,3)</span>
+<span class="var">CENTER_BONUS</span>[<span class="var">r</span>][<span class="var">c</span>] <span class="op">=</span> <span class="num">6</span> <span class="op">-</span> (<span class="op">|</span><span class="var">r</span><span class="op">-3|</span> <span class="op">+</span> <span class="op">|</span><span class="var">c</span><span class="op">-3|</span>)
+
+<span class="comment">// Result grid (visualised):</span>
+<span class="comment">// 0  1  2  3  2  1  0
+// 1  2  3  4  3  2  1
+// 2  3  4  5  4  3  2
+// 3  4  5  6  5  4  3  ← centre (3,3) = 6
+// 2  3  4  5  4  3  2
+// 1  2  3  4  3  2  1
+// 0  1  2  3  2  1  0</span></div>
+  </div>
+</section>
+
+<section class="section" id="adaptive" data-animate>
+  <div class="sec-header">
+    <div class="sec-icon teal"><i class="fa-solid fa-sliders"></i></div>
+    <div class="sec-title-wrap">
+      <div class="sec-num">SECTION 07</div>
+      <div class="sec-title">Adaptive Depth</div>
+      <div class="sec-subtitle">Searching deeper when it matters most</div>
+    </div>
+  </div>
+
+  <p class="prose">A fixed depth is wasteful — in the endgame when very few moves are available, a depth-5 search may explore only a handful of nodes. Conversely, branching is high mid-game. TrapGrid uses adaptive depth: the base depth is 5 but automatically scales up to 8 when both players have few remaining moves, making the AI near-perfect in critical endgame situations.</p>
+
+  <div class="formula-box">
+    <div class="formula-label">Adaptive Depth Logic</div>
+    <div class="formula">
+<span class="kw">function</span> <span class="fn">getAdaptiveDepth</span>(<span class="var">board</span>, <span class="var">p1</span>, <span class="var">p2</span>):
+  <span class="var">ai</span>  <span class="op">←</span> <span class="fn">getValidMoves</span>(<span class="var">board</span>, <span class="var">p2</span>)<span class="op">.length</span>
+  <span class="var">opp</span> <span class="op">←</span> <span class="fn">getValidMoves</span>(<span class="var">board</span>, <span class="var">p1</span>)<span class="op">.length</span>
+  <span class="var">minMoves</span> <span class="op">←</span> <span class="fn">min</span>(<span class="var">ai</span>, <span class="var">opp</span>)
+
+  <span class="kw">if</span> <span class="var">minMoves</span> <span class="op">≤</span> <span class="num">2</span>: <span class="kw">return</span> <span class="fn">min</span>(<span class="num">8</span>, BASE_DEPTH <span class="op">+</span> <span class="num">3</span>)  <span class="comment">// critical endgame</span>
+  <span class="kw">if</span> <span class="var">minMoves</span> <span class="op">≤</span> <span class="num">4</span>: <span class="kw">return</span> <span class="fn">min</span>(<span class="num">8</span>, BASE_DEPTH <span class="op">+</span> <span class="num">2</span>)  <span class="comment">// late endgame</span>
+  <span class="kw">if</span> <span class="var">minMoves</span> <span class="op">≤</span> <span class="num">6</span>: <span class="kw">return</span> <span class="fn">min</span>(<span class="num">8</span>, BASE_DEPTH <span class="op">+</span> <span class="num">1</span>)  <span class="comment">// early endgame</span>
+  <span class="kw">return</span> BASE_DEPTH  <span class="comment">// = 5 (mid-game default)</span></div>
+  </div>
+
+  <div class="cmp-table" style="overflow:auto">
+    <table class="cmp-table">
+      <tr><th>Min Available Moves</th><th>Phase</th><th>Search Depth</th><th>Why</th></tr>
+      <tr><td>> 6</td><td><span class="badge green">Mid-game</span></td><td><span class="badge blue">5</span></td><td>High branching factor — depth 5 is already expensive</td></tr>
+      <tr><td>5–6</td><td><span class="badge gold">Early Endgame</span></td><td><span class="badge blue">6</span></td><td>Fewer branches — can afford to look one ply deeper</td></tr>
+      <tr><td>3–4</td><td><span class="badge gold">Late Endgame</span></td><td><span class="badge blue">7</span></td><td>Very few branches — two extra plies come cheap</td></tr>
+      <tr><td>≤ 2</td><td><span class="badge red">Critical</span></td><td><span class="badge purple">8</span></td><td>Near-terminal — near-perfect play possible, small tree</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="section" id="walldanger" data-animate>
+  <div class="sec-header">
+    <div class="sec-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <div class="sec-title-wrap">
+      <div class="sec-num">SECTION 08</div>
+      <div class="sec-title">Wall Danger & Isolation Mechanics</div>
+      <div class="sec-subtitle">Non-linear penalties that model real tactical danger</div>
+    </div>
+  </div>
+
+  <p class="prose">Linear scoring misses critical positions. A player with 1 immediate move vs 2 is not just "1 unit worse" — they are on the edge of defeat. TrapGrid uses non-linear step functions for isolation to ensure the AI treats near-trapped states as nearly catastrophic.</p>
+
+  <div class="formula-box">
+    <div class="formula-label">Isolation Penalty (applied to AI)</div>
+    <div class="formula">
+<span class="kw">function</span> <span class="fn">getIsolationPenalty</span>(<span class="var">mobility</span>, <span class="var">immediate</span>):
+  <span class="kw">if</span> <span class="var">immediate</span> <span class="op">==</span> <span class="num">0</span>: <span class="kw">return</span> <span class="num">200</span>   <span class="comment">// one move from losing → massive penalty</span>
+  <span class="kw">if</span> <span class="var">mobility</span>  <span class="op">&lt;</span>  <span class="num">4</span>: <span class="kw">return</span>  <span class="num">80</span>   <span class="comment">// very small pocket</span>
+  <span class="kw">if</span> <span class="var">mobility</span>  <span class="op">&lt;</span>  <span class="num">8</span>: <span class="kw">return</span>  <span class="num">40</span>   <span class="comment">// restricted pocket</span>
+  <span class="kw">if</span> <span class="var">mobility</span>  <span class="op">&lt;</span> <span class="num">12</span>: <span class="kw">return</span>  <span class="num">15</span>   <span class="comment">// somewhat constrained</span>
+  <span class="kw">return</span> <span class="num">0</span>  <span class="comment">// comfortable space — no penalty</span>
+
+<span class="kw">function</span> <span class="fn">getIsolationBonus</span>(<span class="var">oppMobility</span>, <span class="var">oppImmediate</span>):
+  <span class="kw">if</span> <span class="var">oppImmediate</span> <span class="op">==</span> <span class="num">0</span>: <span class="kw">return</span> <span class="num">300</span>  <span class="comment">// opponent about to be trapped → huge bonus</span>
+  <span class="kw">if</span> <span class="var">oppMobility</span>  <span class="op">&lt;</span>  <span class="num">4</span>: <span class="kw">return</span>  <span class="num">80</span>
+  <span class="kw">if</span> <span class="var">oppMobility</span>  <span class="op">&lt;</span>  <span class="num">8</span>: <span class="kw">return</span>  <span class="num">35</span>
+  <span class="kw">return</span> <span class="num">0</span></div>
+  </div>
+
+  <div class="info-box red">
+    <div class="ib-icon"><i class="fa-solid fa-skull"></i></div>
+    <div class="ib-body">Consider a position where the AI has territory = 12 and immediate = 0. The territory score looks fine, but the AI is one turn from losing. A flat score would miss this. The <code>immediate == 0 → -200</code> penalty ensures the AI treats these near-death states with extreme caution.</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <p class="prose">Wall Danger models the danger of being trapped in a corner or edge. Corners have only 2 neighbours (maximum), making them the easiest places to seal someone. Edges have 3. The danger score penalises being in these locations and having few immediate moves simultaneously.</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-title" style="color:#dc2626">Corner Position</div>
+      <div class="card-body">Base danger <code>+4</code>. Only 2 adjacent cells. One blocked neighbour = only 1 escape. Two blocked = trapped. Avoid corners at all cost — or use them to trap the opponent!</div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:#ea580c">Edge Position</div>
+      <div class="card-body">Base danger <code>+2</code>. Three adjacent cells. Less dangerous than corners but still restricts movement. The AI avoids edges unless tactically forced.</div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:#d97706">Low Immediate Moves</div>
+      <div class="card-body">Each move below 2 adds <code>+3</code> wall danger. Combined with corner/edge position this compounds quickly. <code>danger = 4 + (2-0)×3 = 10</code> for a trapped corner.</div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:#0891b2">Centre Safe Zone</div>
+      <div class="card-body">Centre cells (3,3) have 4 neighbours and score 0 wall danger. The AI actively steers toward the centre to maintain maximum flexibility.</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="strategy" data-animate>
+  <div class="sec-header">
+    <div class="sec-icon green"><i class="fa-solid fa-chess-knight"></i></div>
+    <div class="sec-title-wrap">
+      <div class="sec-num">SECTION 09</div>
+      <div class="sec-title">Strategy Guide</div>
+      <div class="sec-subtitle">How to think and beat the AI</div>
+    </div>
+  </div>
+
+  <p class="prose">TrapGrid has deep strategy despite simple rules. The key insight is that territory matters more than position — a player who secures a large pocket of cells will outlast one who chases the opponent. Understanding the AI's priorities lets you exploit its blind spots.</p>
+
+  <div class="strategy-grid">
+    <div class="strat-card green">
+      <div class="strat-title"><i class="fa-solid fa-bullseye" style="color:var(--p1-dark)"></i> Control the Centre</div>
+      <div class="strat-body">Move toward (3,3) early. Central cells give you 4 possible moves at all times and maximum BFS territory. The AI knows this — contest the centre immediately or you'll be squeezed into a corner.</div>
+    </div>
+    <div class="strat-card blue">
+      <div class="strat-title"><i class="fa-solid fa-map" style="color:var(--p2-dark)"></i> Divide the Board</div>
+      <div class="strat-body">Try to cut off a large chunk of the board for yourself and a small chunk for the AI. Once separated, the territory disparity rapidly becomes decisive. Look at the BFS zone overlay to see if you've achieved separation.</div>
+    </div>
+    <div class="strat-card gold">
+      <div class="strat-title"><i class="fa-solid fa-compress" style="color:#a05000"></i> Compress the AI</div>
+      <div class="strat-body">Don't run away — chase the AI toward walls and corners. A player compressed into the bottom-right quarter of the board with few cells will run out of moves quickly. Aggressive containment beats passive survival.</div>
+    </div>
+    <div class="strat-card red">
+      <div class="strat-title"><i class="fa-solid fa-skull-crossbones" style="color:#dc2626"></i> Avoid Corners</div>
+      <div class="strat-body">Corners at (0,0), (0,6), (6,0), (6,6) have only 2 exits. Even one blocked neighbour halves your options. Stay away from corners unless you're deliberately trapping the opponent in one.</div>
+    </div>
+    <div class="strat-card green">
+      <div class="strat-title"><i class="fa-solid fa-eye" style="color:var(--p1-dark)"></i> Think Parity</div>
+      <div class="strat-body">If you're isolated from the AI in a pocket, count the available cells. <strong>Odd cells = last mover wins</strong> (usually you). <strong>Even cells = last mover loses</strong> (usually you). You can sometimes "waste" a move to flip parity.</div>
+    </div>
+    <div class="strat-card blue">
+      <div class="strat-title"><i class="fa-solid fa-robot" style="color:var(--p2-dark)"></i> Beat the AI</div>
+      <div class="strat-body">The AI searches depth 5–8 but evaluates using a heuristic. In truly unusual board shapes, the heuristic can be wrong. Create strange, irregular pockets. The AI expects the opponent to play near-optimally — unpredictable moves can throw it off.</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <p class="prose" style="margin-top:8px"><strong>Parity Rule (critical endgame concept):</strong></p>
+  <div class="formula-box">
+    <div class="formula-label">Parity Strategy</div>
+    <div class="formula">
+<span class="comment">// If players are separated into isolated pockets:</span>
+<span class="var">yourCells</span>  <span class="op">=</span> <span class="fn">BFS</span>(<span class="var">your_position</span>)     <span class="comment">// cells in your pocket</span>
+<span class="var">their_cells</span> <span class="op">=</span> <span class="fn">BFS</span>(<span class="var">their_position</span>)    <span class="comment">// cells in their pocket</span>
+
+<span class="kw">if</span> <span class="var">yourCells</span> <span class="op">%</span> <span class="num">2</span> <span class="op">==</span> <span class="num">1</span>:
+  <span class="comment">// ODD → you will make the LAST move in your pocket → you WIN if isolated</span>
+<span class="kw">else</span>:
+  <span class="comment">// EVEN → opponent makes the last move in your region → you LOSE if isolated</span>
+  <span class="comment">// Strategy: waste a move (move then come back) to flip parity!</span></div>
+  </div>
+</section>
+
+<section class="section" id="complexity" data-animate>
+  <div class="sec-header">
+    <div class="sec-icon purple"><i class="fa-solid fa-chart-line"></i></div>
+    <div class="sec-title-wrap">
+      <div class="sec-num">SECTION 10</div>
+      <div class="sec-title">Complexity Analysis</div>
+      <div class="sec-subtitle">Theoretical bounds and practical performance</div>
+    </div>
+  </div>
+
+  <div class="cmp-table" style="overflow:auto">
+    <table class="cmp-table">
+      <tr><th>Operation</th><th>Time Complexity</th><th>Space</th><th>Notes</th></tr>
+      <tr><td>Single BFS</td><td><span class="badge green">O(R×C) = O(49)</span></td><td>O(49)</td><td>Constant on 7×7 board</td></tr>
+      <tr><td>getValidMoves</td><td><span class="badge green">O(4) = O(1)</span></td><td>O(1)</td><td>4 directions only</td></tr>
+      <tr><td>orderMoves</td><td><span class="badge gold">O(m × 49)</span></td><td>O(m)</td><td>m = number of legal moves</td></tr>
+      <tr><td>Minimax (no pruning)</td><td><span class="badge red">O(b^d)</span></td><td>O(d)</td><td>b ≈ 4, d = 5 → ~1024 nodes</td></tr>
+      <tr><td>Minimax + Alpha-Beta</td><td><span class="badge green">O(b^(d/2))</span></td><td>O(d)</td><td>Best case ≈ 32 nodes at depth 5</td></tr>
+      <tr><td>Full AI turn (typical)</td><td><span class="badge gold">O(b^d × 49)</span></td><td>O(d × 49)</td><td>Sub-second in practice</td></tr>
+      <tr><td>Territory map</td><td><span class="badge green">O(2 × 49) = O(98)</span></td><td>O(49)</td><td>Two BFS runs per update</td></tr>
+      <tr><td>Danger/heatmap</td><td><span class="badge green">O(49)</span></td><td>O(49)</td><td>Manhattan distance per cell</td></tr>
+    </table>
+  </div>
+
+  <div class="stat-row" style="margin-top:16px">
+    <div class="stat-chip"><div class="sc-label">Base Search Depth</div><div class="sc-val">5</div><div class="sc-sub">mid-game</div></div>
+    <div class="stat-chip"><div class="sc-label">Max Search Depth</div><div class="sc-val">8</div><div class="sc-sub">endgame adaptive</div></div>
+    <div class="stat-chip"><div class="sc-label">Win Score</div><div class="sc-val">100k</div><div class="sc-sub">terminal</div></div>
+    <div class="stat-chip"><div class="sc-label">Board Cells</div><div class="sc-val">49</div><div class="sc-sub">7×7 grid</div></div>
+    <div class="stat-chip"><div class="sc-label">Max Legal Moves</div><div class="sc-val">4</div><div class="sc-sub">per position</div></div>
+  </div>
+
+  <div class="info-box blue" style="margin-top:12px">
+    <div class="ib-icon"><i class="fa-solid fa-microchip"></i></div>
+    <div class="ib-body"><strong>In practice:</strong> With alpha-beta pruning and move ordering, the typical AI turn evaluates 80–400 nodes (not 1024), completes in under 50ms on a modern device, and plays at near-perfect strength. The AI panel's "Nodes Visited" and "Pruned" stats reflect this in real-time.</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <p class="prose" style="margin-top:4px"><strong>Game State Space:</strong> The total number of distinct TrapGrid positions is bounded by the number of ways to choose which cells are blocked, which are occupied, and who moves next — a massive combinatorial space. Minimax doesn't enumerate all of it; it only searches the sub-tree reachable from the current position, pruning aggressively. This is what makes depth-5 search practical in real-time.</p>
+
+  <div class="pill-row">
+    <span class="pill blue">Two-player zero-sum game</span>
+    <span class="pill green">Perfect information</span>
+    <span class="pill purple">Combinatorial</span>
+    <span class="pill gold">Deterministic</span>
+    <span class="pill cyan">NP-hard in general case</span>
+    <span class="pill red">PSPACE-complete (unbounded)</span>
+  </div>
+</section>
+
+</div>
+
+<div class="footer">◈ TRAPGRID — Algorithm Theory · Made by Bhavy Manchanda ◈</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  const grid = document.getElementById('bfs-demo-grid');
+  if (grid) {
+    const layout = [
+      ['bl','e','e','e','e','e','e'],
+      ['e','p1','e','e','bl','e','e'],
+      ['e','e','e','bl','e','e','e'],
+      ['e','e','bl','e','e','e','bl'],
+      ['e','e','e','e','bl','e','e'],
+      ['e','e','e','bl','e','p2','e'],
+      ['e','e','e','e','e','e','bl'],
+    ];
+    const bfsFrom = (startR, startC) => {
+      const visited = new Set();
+      const q = [[startR,startC]];
+      visited.add(startR+','+startC);
+      while (q.length) {
+        const [r,c] = q.shift();
+        for (const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+          const nr=r+dr, nc=c+dc;
+          if (nr<0||nr>6||nc<0||nc>6) continue;
+          const k=nr+','+nc;
+          if (visited.has(k)) continue;
+          if (layout[nr][nc]==='bl'||layout[nr][nc]==='p1'&&!(nr===startR&&nc===startC)||layout[nr][nc]==='p2'&&!(nr===startR&&nc===startC)) continue;
+          if (layout[nr][nc]==='bl') continue;
+          visited.add(k);
+          q.push([nr,nc]);
+        }
+      }
+      return visited;
+    };
+    let p1r=1,p1c=1,p2r=5,p2c=5;
+    const p1cells = bfsFrom(p1r,p1c);
+    const p2cells = bfsFrom(p2r,p2c);
+    for (let r=0;r<7;r++) for (let c=0;c<7;c++) {
+      const div=document.createElement('div');
+      div.className='bc';
+      const t=layout[r][c];
+      const k=r+','+c;
+      if (t==='p1'){div.classList.add('p1-start');div.textContent='P1';}
+      else if (t==='p2'){div.classList.add('p2-start');div.textContent='P2';}
+      else if (t==='bl'){div.classList.add('blocked-cell');div.textContent='✕';}
+      else {
+        const inP1=p1cells.has(k), inP2=p2cells.has(k);
+        if (inP1&&inP2) div.classList.add('bfs-both');
+        else if (inP1)  div.classList.add('bfs-p1');
+        else if (inP2)  div.classList.add('bfs-p2');
+      }
+      grid.appendChild(div);
+    }
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
+    });
+  }, {threshold:0.08});
+
+  document.querySelectorAll('.section, .toc').forEach(el => {
+    observer.observe(el);
+  });
+
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const scrollObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const link = document.querySelector(`.nav-link[href="#${e.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, {threshold:0.4});
+  sections.forEach(s => scrollObserver.observe(s));
+
+  setTimeout(() => {
+    document.querySelector('.toc')?.classList.add('visible');
+  }, 100);
+});
+</script>
+</body>
+</html>
